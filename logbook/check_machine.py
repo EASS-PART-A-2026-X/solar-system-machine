@@ -21,15 +21,20 @@ ORDER = re.compile(r'^->\s*(A|B|C|ALL):', re.S)
 
 
 def repo_path(path):
-    """Map a file an agent edited (anywhere on disk) to its place in this repo."""
-    name = Path(path).name
-    return f'product/{name}' if name in {'scene.js', 'style.css', 'labels.js', 'index.html', 'data.js'} else name
+    """Map a file an agent edited to its place in this repo, or None for scratch files outside it.
+    The first run worked in ~/solar-system, whose files became product/."""
+    p = Path(path).resolve()
+    if p.is_relative_to(REPO):
+        return p.relative_to(REPO).as_posix()
+    if p.parent.name == 'solar-system':
+        return f'product/{p.name}'
+    return None
 
 
 def record(transcripts):
     agents = {}
     for letter, path in sorted(find_agents(transcripts).items()):
-        files = sorted({repo_path(f) for _, _, _, f in events(path) if f})
+        files = sorted({r for _, _, _, f in events(path) if f and (r := repo_path(f))})
         actions = sum(1 for _, kind, _, _ in events(path) if kind not in ('result', 'thought', 'instruction'))
         agents[letter] = {'files': files, 'actions': actions}
     lines = json.loads((REPO / 'logbook' / 'chat.json').read_text())

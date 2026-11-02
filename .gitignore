@@ -4,3 +4,5 @@ logbook/index.html
 logbook/status.json
 logbook/chat.json
 .DS_Store
+mission-control/.data/
+logbook/validation.json

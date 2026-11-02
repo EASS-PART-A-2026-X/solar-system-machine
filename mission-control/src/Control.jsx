@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { orderState } from './protocol.js';
 
 const AGENTS = [
   { id: 'A', name: 'A · 3D scene', color: '#e03131' },
@@ -20,28 +21,34 @@ export function Control({ post, lines }) {
   const [status, setStatus] = useState({});
   const [target, setTarget] = useState('ALL');
   const [text, setText] = useState('');
+  const [gate, setGate] = useState(null);
 
   useEffect(() => {
-    const load = () => fetch('/logbook/status.json', { cache: 'no-store' }).then((r) => r.json()).then(setStatus).catch(() => {});
+    const load = () => {
+      fetch('/logbook/status.json', { cache: 'no-store' }).then((r) => r.json()).then(setStatus).catch(() => {});
+      fetch('/logbook/validation.json', { cache: 'no-store' }).then((r) => r.json()).then(setGate).catch(() => setGate(null));
+    };
     load();
     const t = setInterval(load, 4000);
     return () => clearInterval(t);
   }, []);
 
   const order = (to, msg) => post(`-> ${to}: ${msg}`);
-  const acked = (id) => {
-    const lastOrder = lines.findLastIndex((l) => /\] root: -> /.test(l) && (l.includes(`-> ${id}:`) || l.includes('-> ALL:')));
-    if (lastOrder < 0) return null;
-    return lines.slice(lastOrder + 1).some((l) => l.includes(`] ${id}:`));
-  };
 
+  const failed = gate ? gate.checks.filter((c) => !c.ok) : [];
   return (
     <div className="control">
+      <div className={`gate ${!gate ? 'none' : failed.length ? 'red' : 'green'}`}>
+        <b>Validation gate</b>
+        {!gate && ' · not run yet (./validate)'}
+        {gate && ` · ${gate.passed}/${gate.total} checks pass · ${new Date(gate.at).toLocaleTimeString()}`}
+        {failed.slice(0, 3).map((c) => <div key={c.id} className="fail">✗ {c.layer} · {c.id}: {c.detail}</div>)}
+      </div>
       <div className="cards">
         {AGENTS.map((a) => {
           const s = status[a.id] || {};
           const live = s.idleSec != null && s.idleSec < 120;
-          const ack = acked(a.id);
+          const state = orderState(lines, a.id);
           return (
             <div key={a.id} className="card" style={{ borderTopColor: a.color }}>
               <div className="row">
@@ -51,8 +58,7 @@ export function Control({ post, lines }) {
               <div className="said">“{lastLineOf(lines, a.id).slice(0, 140)}”</div>
               <div className="meta">
                 {s.actions ?? 0} actions · {(s.files || []).map((f) => f.split('/').pop()).join(', ') || 'no files'}
-                {ack === false && <span className="pending"> · order pending</span>}
-                {ack === true && <span className="ok"> · order acked</span>}
+                {state && <span className={state === 'pending' ? 'pending' : 'ok'}> · order {state}</span>}
               </div>
               <button onClick={() => setTarget(a.id)}>Order {a.id}</button>
             </div>

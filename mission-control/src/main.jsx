@@ -7,6 +7,7 @@ import { Control } from './Control.jsx';
 const ROOM = 'solar-team-chat';
 const params = new URLSearchParams(location.search);
 const NAME = params.get('name') || 'human';
+const TOKEN = params.get('token') || undefined; // without the write token the chat is read-only
 const COLORS = { A: '#e03131', B: '#1971c2', C: '#2f9e44', lead: '#7048e8', root: '#000000' };
 
 function App() {
@@ -17,7 +18,7 @@ function App() {
       YjsPlugin.configure({
         options: {
           cursors: { data: { name: NAME, color: COLORS[NAME] || '#888' } },
-          providers: [{ type: 'hocuspocus', options: { name: ROOM, url: 'ws://localhost:1234' } }],
+          providers: [{ type: 'hocuspocus', options: { name: ROOM, url: 'ws://localhost:1234', token: TOKEN } }],
           onConnect: () => setStatus('connected'),
           onDisconnect: () => setStatus('disconnected'),
         },
@@ -51,6 +52,7 @@ function App() {
     <>
       <header>
         <b>Plate team chat</b> · room <code>{ROOM}</code> · you are <b style={{ color: COLORS[NAME] }}>{NAME}</b> · {status}
+        {!TOKEN && <span className="ro"> · read-only (open with &amp;token=…)</span>}
       </header>
       {NAME === 'root' && <Control post={(m) => window.__post(m)} lines={lines} />}
       <form

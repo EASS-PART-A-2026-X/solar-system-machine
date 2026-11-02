@@ -94,10 +94,10 @@ const painters = {
   },
   Mercury: (lat, lon, x, y, z) => {
     const n = fbm(x * 5, y * 5, z * 5, 6);
-    let c = mix([88, 84, 80], [178, 170, 160], n);
+    let c = mix([128, 118, 104], [204, 192, 172], n); // grey-tan, not a dark hole
     const cr = fbm(x * 18 + 3, y * 18, z * 18, 2);
     if (cr > 0.68) c = mix(c, [205, 198, 188], (cr - 0.68) * 3);
-    if (cr < 0.3) c = mix(c, [60, 57, 55], (0.3 - cr) * 2);
+    if (cr < 0.3) c = mix(c, [104, 96, 86], (0.3 - cr) * 2);
     return c;
   },
   Venus: (lat, lon, x, y, z) => {
@@ -248,7 +248,7 @@ const orbitLines = [];
 const planetMats = [];
 
 // ---------- planets ----------
-const bodies = [{ name: SUN.name, obj: sun, radius: SUN_R, ext: 0 }];
+const bodies = [{ name: SUN.name, obj: sun, radius: SUN_R }];
 // hairline orbits: inner ones warmer and brighter, as if lit by the Sun
 // Orbits fade out above the caption band: uCut = NDC y of B's __copyRects.facts top.
 const orbitCut = { value: -2 };
@@ -443,12 +443,17 @@ const dotTex = glowTexture([[0, 'rgba(255,255,255,1)'], [0.35, 'rgba(255,255,255
 const camBase = new THREE.Vector3(-12, 27, 46);
 const target = new THREE.Vector3(25, -3, 4);
 const BASE_ZOOM = 1.05;
+// On phones every world is enlarged by the same factor, so the smallest still reads as a disc
+// and the real size order is untouched.
+let planetScale = 1;
 function frame() {
   const w = stage.clientWidth || window.innerWidth;
   const h = stage.clientHeight || window.innerHeight;
   renderer.setSize(w, h, false);
   if (typeof composer !== 'undefined') { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h); }
   camera.aspect = w / h;
+  planetScale = w < 520 ? 1.5 : 1;
+  for (const b of bodies) if (b.a) b.obj.scale.setScalar(planetScale);
   // keep the whole system in frame on tall/narrow screens
   // keep at least the horizontal field of a 16:10 frame at 30deg vertical
   const portrait = camera.aspect < 0.8;
@@ -458,7 +463,7 @@ function frame() {
   camera.fov = Math.min(90, THREE.MathUtils.radToDeg(2 * Math.atan(vTan)));
   camera.updateProjectionMatrix();
   layoutPlanets(w, h);
-  if (typeof fitGain !== 'undefined') fitGain = 0.3;
+  fitGain = 1;
 }
 
 // Hero layout: phase each planet on its own orbit so that, on screen, they march along a
@@ -535,7 +540,7 @@ function anchorFor(name, worldPos, radius, w, h) {
 const THEMES = {
   night:  { bg: 0x000000, orbit: null, orbitK: 1, stars: true, starTint: [1, 1, 1], glow: 1, bloom: 0.6, amb: [0x4a5878, 0.06], belt: [0x8a8070, 0.22], sun: [1, 1, 1] },
   natgeo: { bg: 0x000000, orbit: null, orbitK: 1, stars: true, starTint: [0.82, 0.9, 1.15], glow: 1, bloom: 0.6, amb: [0x4a5878, 0.06], belt: [0x8a8070, 0.22], sun: [1, 1, 1] },
-  print:  { bg: 0xf3eee3, orbit: 0x8a6a3a, orbitK: 2.6, orbitOp: 0.28, stars: false, starTint: [1, 1, 1], glow: 0, bloom: 0, amb: [0xfff4e0, 0.55], belt: [0x7a5a3a, 0.35], sun: [1, 1, 1], flat: 1 },
+  print:  { bg: 0xf3eee3, orbit: 0x6e4f26, orbitK: 2.6, orbitOp: 0.5, stars: false, starTint: [1, 1, 1], glow: 0, bloom: 0, amb: [0xfff4e0, 0.8], belt: [0x7a5a3a, 0.35], sun: [1, 1, 1], flat: 1 },
 };
 let themeName = null;
 function applyTheme(name) {
@@ -557,37 +562,65 @@ function applyTheme(name) {
   const bm = window.__beltMat; if (bm) { bm.color.set(th.belt[0]); bm.opacity = th.belt[1]; }
 
 }
-// Auto-fit: every frame, measure the planets' on-screen extent (rings included, Sun centre kept
-// on-canvas) and gently zoom/pan so the moving system stays between the masthead and captions.
+// Auto-fit: every frame, measure where the bodies are going to be and zoom/pan so they stay
+// between the masthead and the captions. Inner planets lap in 20-50 s, faster than a chasing
+// camera can follow, so they are fitted by their WHOLE orbit; giants (2-9 min laps) by the arc
+// they cover over the next ~25 s. The Sun's full disc counts (only its left edge may bleed off).
 const fit = { zoom: 1, pan: new THREE.Vector3() };
-const fitV = new THREE.Vector3(), fitR = new THREE.Vector3(), fitU = new THREE.Vector3();
-var fitGain = 0.3; // fast settle on load/resize, then gentle
-function autoFit() {
+const fitV = new THREE.Vector3(), fitR = new THREE.Vector3(), fitU = new THREE.Vector3(), fitC = new THREE.Vector3();
+var fitGain = 1; // 1 = snap (load/resize/copy change), then time-based easing
+let fitKey = '';
+function fitPoints(b, out) {
+  if (!b.a) { out.push([sun.position, SUN_R, true]); return; }
+  const lap = 20 * (b.period / 88), rad = (b.ext || b.radius) * planetScale * 1.2; // 1.2 = focus swell + slack
+  // Inner planets lap in 20-50 s: fit their whole orbit (a fixed envelope) so they never drive
+  // the zoom; giants barely move, so a short look-ahead along their path is enough.
+  const inner = b.period < 700;
+  const span = inner ? Math.PI * 2 : Math.min(Math.PI * 2, (FIT_AHEAD / lap) * Math.PI * 2);
+  const n = inner ? 32 : 8;
+  for (let k = 0; k <= n; k++) out.push([ellipsePoint(b.a, b.e, b.theta - 0.03 + (span * k) / n, new THREE.Vector3()), rad, false]);
+}
+const FIT_AHEAD = 30; // seconds of look-ahead for the giants (a few degrees of arc)
+function setCamera(t) {
+  const pitchAxis = tmp.crossVectors(yAxis, camBase).normalize();
+  const z = view.zoom * fit.zoom;
+  camera.position.copy(camBase).applyAxisAngle(pitchAxis, -view.pitch).multiplyScalar(z).applyAxisAngle(yAxis, view.yaw).add(fit.pan);
+  camera.position.y += Math.sin(t * 0.11) * 0.5;
+  camera.lookAt(tmpL.copy(target).multiplyScalar(z).applyAxisAngle(yAxis, view.yaw).add(fit.pan));
+  camera.updateMatrixWorld();
+}
+function autoFit(gain) {
   const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
   if (!w || !h) return;
-  camera.updateMatrixWorld();
   fitR.setFromMatrixColumn(camera.matrixWorld, 0); fitU.setFromMatrixColumn(camera.matrixWorld, 1);
-  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-  for (const b of bodies) {
-    b.obj.getWorldPosition(fitV);
-    const c = fitV.clone().project(camera), e = fitV.addScaledVector(fitR, b.ext || 0).project(camera);
-    const px = (c.x * 0.5 + 0.5) * w, py = (-c.y * 0.5 + 0.5) * h, rp = Math.abs(e.x - c.x) * 0.5 * w;
-    x0 = Math.min(x0, px - rp); x1 = Math.max(x1, px + rp); y0 = Math.min(y0, py - rp); y1 = Math.max(y1, py + rp);
-  }
+  const pts = [];
+  for (const b of bodies) fitPoints(b, pts);
   const cr = window.__copyRects;
-  const top = Math.max(0.16 * h, cr && cr.masthead ? cr.masthead.y1 + 16 : 0);
-  const bot = cr && cr.facts ? cr.facts.y0 - 16 : 0.72 * h;
-  const L = 0.03 * w, Rr = 0.97 * w;
+  const top = Math.max(0.04 * h, cr && cr.masthead ? cr.masthead.y1 + 14 : 0.16 * h);
+  const mx = cr && cr.masthead ? cr.masthead.x1 + 14 : -1, openTop = 0.04 * h;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [p, rad, isSun] of pts) {
+    const c = fitC.copy(p).project(camera);
+    const px = (c.x * 0.5 + 0.5) * w, py = (-c.y * 0.5 + 0.5) * h;
+    const e = fitV.copy(p).addScaledVector(fitR, rad).project(camera);
+    const rp = Math.hypot((e.x - c.x) * 0.5 * w, (e.y - c.y) * 0.5 * h);
+    x0 = Math.min(x0, isSun ? px - rp * 0.4 : px - rp); x1 = Math.max(x1, px + rp);
+    // right of the masthead the sky is open: those discs may rise to near the top edge
+    const lift = px - rp > mx ? top - openTop : 0;
+    y0 = Math.min(y0, py - rp + lift); y1 = Math.max(y1, py + rp);
+  }
+  const bot = cr && cr.facts ? cr.facts.y0 - 14 : 0.72 * h;
+  const L = 10, Rr = w - 10;
   const need = Math.max((x1 - x0) / (Rr - L), (y1 - y0) / Math.max(40, bot - top));
-  const want = need > 1 ? need : need < 0.82 ? need / 0.82 : 1;
-  fit.zoom = THREE.MathUtils.clamp(fit.zoom * (1 + (want - 1) * fitGain), 0.75, 2.2);
+  const want = need > 0.97 ? need / 0.97 : need < 0.85 ? need / 0.85 : 1;
+  fit.zoom = THREE.MathUtils.clamp(fit.zoom * (1 + (want - 1) * gain), 0.5, 5);
   const dx = (L + Rr) / 2 - (x0 + x1) / 2, dy = (top + bot) / 2 - (y0 + y1) / 2;
-  const dist = camera.position.distanceTo(sun.position);
+  const dist = camera.position.distanceTo(tmpP.copy(target).multiplyScalar(view.zoom * fit.zoom).add(fit.pan));
   const wpp = (2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
-  fit.pan.addScaledVector(fitR, -dx * wpp * fitGain).addScaledVector(fitU, dy * wpp * fitGain);
-  fitGain = Math.max(0.035, fitGain * 0.97);
-  fit.pan.clampLength(0, 40);
+  fit.pan.addScaledVector(fitR, -dx * wpp * gain).addScaledVector(fitU, dy * wpp * gain);
+  fit.pan.clampLength(0, 120);
 }
+function settleFit(t) { for (let k = 0; k < 200; k++) { setCamera(t); autoFit(0.6); } setCamera(t); }
 function tick() {
   const want = document.documentElement.dataset.theme || 'night';
   const facts = window.__copyRects && window.__copyRects.facts;
@@ -612,9 +645,10 @@ function tick() {
   sun.rotation.y = t * 0.02;
   for (let i = 1; i < bodies.length; i++) {
     const b = bodies[i];
-    // real orbital motion: Mercury laps in 20 s, others scale with sqrt(period) (Neptune ~9 min)
-    b.theta += dt * (Math.PI * 2) / (20 * Math.sqrt(b.period / 88));
-    const focus = window.__focusPlanet === b.name ? 1.18 : 1; b.obj.scale.setScalar(b.obj.scale.x + (focus - b.obj.scale.x) * 0.12);
+    // true period ratios: Mercury laps in 20 s, Venus 51 s, Earth 83 s, Mars 156 s; the giants
+    // creep (Jupiter ~16 min), which also keeps the auto-fit framing steady
+    b.theta += dt * (Math.PI * 2) / (20 * (b.period / 88));
+    const focus = (window.__focusPlanet === b.name ? 1.18 : 1) * planetScale; b.obj.scale.setScalar(b.obj.scale.x + (focus - b.obj.scale.x) * 0.12);
     const th = b.theta;
     if (b.obj.userData.moon) b.obj.userData.moon.position.set(Math.cos(t * 1.3) * b.obj.userData.moonR, 0, -Math.sin(t * 1.3) * b.obj.userData.moonR);
     ellipsePoint(b.a, b.e, th, b.obj.position);
@@ -624,19 +658,18 @@ function tick() {
   }
   scene.traverse((o) => { if (o.material && o.material.uniforms && o.material.uniforms.uSun) o.material.uniforms.uSun.value.copy(sun.position); });
 
-  autoFit();
-  const pitchAxis = tmp.crossVectors(yAxis, camBase).normalize();
-  const z = view.zoom * fit.zoom;
-  camera.position.copy(camBase).applyAxisAngle(pitchAxis, -view.pitch).multiplyScalar(z).applyAxisAngle(yAxis, view.yaw).add(fit.pan);
-  camera.position.y += Math.sin(t * 0.11) * 0.5;
-  camera.lookAt(tmpL.copy(target).multiplyScalar(z).applyAxisAngle(yAxis, view.yaw).add(fit.pan));
+  // re-snap when the stage size or B's text blocks change, otherwise ease (time-based, frame-rate independent)
+  const key = JSON.stringify(window.__copyRects || null) + renderer.domElement.clientWidth + 'x' + renderer.domElement.clientHeight;
+  if (key !== fitKey) { fitKey = key; fitGain = 1; }
+  if (fitGain >= 1) { settleFit(t); fitGain = 0; }
+  else { setCamera(t); autoFit(1 - Math.exp(-dt * 4)); setCamera(t); }
 
   composer.render();
 
   const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
   camera.updateMatrixWorld();
-  window.__labelAnchors = bodies.map((b) => anchorFor(b.name, b.obj.getWorldPosition(tmp2.clone()), b.radius, w, h));
+  window.__labelAnchors = bodies.map((b) => anchorFor(b.name, b.obj.getWorldPosition(tmp2.clone()), b.radius * b.obj.scale.x, w, h));
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
-window.__scene = { scene, camera, renderer, bodies, composer, bloom };
+window.__scene = { scene, camera, renderer, bodies, composer, bloom, fit, view };

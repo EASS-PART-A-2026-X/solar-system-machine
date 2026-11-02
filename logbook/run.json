@@ -1,0 +1,33 @@
+{
+ "agents": {
+  "A": {
+   "files": [
+    "product/scene.js"
+   ],
+   "actions": 347
+  },
+  "B": {
+   "files": [
+    "product/labels.js",
+    "product/style.css"
+   ],
+   "actions": 359
+  },
+  "C": {
+   "files": [],
+   "actions": 341
+  }
+ },
+ "orders": [
+  {
+   "at": "4:57:42 PM",
+   "to": "ALL",
+   "replies": {
+    "A": "done",
+    "B": "done",
+    "C": "done"
+   }
+  }
+ ],
+ "informalRootLines": 3
+}

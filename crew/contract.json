@@ -1,0 +1,11 @@
+{
+  "owners": {
+    "A": ["product/scene.js"],
+    "B": ["product/style.css", "product/labels.js", "product/index.html"],
+    "C": []
+  },
+  "orders": {
+    "format": "root|lead: -> A|B|C|ALL: <order>",
+    "replies": "X: ack <gist>, then X: done <gist>"
+  }
+}

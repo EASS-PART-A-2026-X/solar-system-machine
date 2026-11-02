@@ -1,0 +1,12 @@
+{
+  "name": "product-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node validate.mjs"
+  },
+  "dependencies": {
+    "axe-core": "^4.11.0",
+    "playwright-core": "^1.56.0"
+  }
+}

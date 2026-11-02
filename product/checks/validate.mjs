@@ -13,17 +13,22 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const AXE = await readFile(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
 // Where the spread has to hold up: phone, tablet, laptop, the size that broke, and a tall desktop.
+// minPlanet: the smallest planet's on-screen diameter in px, so every world reads as a world.
 export const VIEWPORTS = [
-  { id: '390x844', width: 390, height: 844, minLabels: 6 },
-  { id: '723x934', width: 723, height: 934, minLabels: 8 },
-  { id: '1280x800', width: 1280, height: 800, minLabels: 9 },
-  { id: '1440x1000', width: 1440, height: 1000, minLabels: 9 },
-  { id: '1440x1300', width: 1440, height: 1300, minLabels: 9 },
+  { id: '390x844', width: 390, height: 844, minLabels: 6, minPlanet: 8 },
+  { id: '723x934', width: 723, height: 934, minLabels: 8, minPlanet: 10 },
+  { id: '1280x800', width: 1280, height: 800, minLabels: 9, minPlanet: 14 },
+  { id: '1440x1000', width: 1440, height: 1000, minLabels: 9, minPlanet: 14 },
+  { id: '1440x1300', width: 1440, height: 1300, minLabels: 9, minPlanet: 14 },
 ];
 export const THEMES = ['night', 'print', 'natgeo'];
 const SAMPLES = 6;       // the planets orbit, so geometry is sampled over a few seconds
 const SETTLE_MS = 4500;  // camera auto-fit settles quickly after load
 const TOL = 2;           // px of anti-aliasing slack
+const EDGE = 12;         // labels stay this far inside the stage (the Nat Geo frame is 12px)
+const LEADER = 40;       // longest allowed gap between a disc and its label, px
+const SIZE_ORDER = 1.2;  // a planet this much larger in reality must not draw smaller
+const STEADY = { viewport: '1440x1000', seconds: 22, maxSwing: 1.1 }; // one full Mercury lap (20s)
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
@@ -69,7 +74,8 @@ async function sample(page) {
 function geometryChecks(vp, samples) {
   const out = [];
   const names = [SUN.name, ...PLANETS.map((p) => p.name)];
-  const bad = { contract: [], frame: [], copy: [], labelsOnDiscs: [], labelsOverlap: [], fewLabels: [] };
+  const bad = { contract: [], frame: [], copy: [], labelsOnDiscs: [], labelsOverlap: [], fewLabels: [], edge: [], leader: [], small: [], order: [] };
+  const real = Object.fromEntries(PLANETS.map((p) => [p.name, p.radiusKm]));
   samples.forEach((s, i) => {
     const at = `t${i}`;
     const got = s.anchors.map((a) => a.name);
@@ -85,6 +91,19 @@ function geometryChecks(vp, samples) {
       for (const l of s.labels) if (l.name.toLowerCase() !== a.name.toLowerCase() && circleHitsRect(disc, l)) bad.labelsOnDiscs.push(`${l.name} label on ${a.name}@${at}`);
     }
     s.labels.forEach((l, j) => s.labels.slice(j + 1).forEach((m) => { if (rectsHit(l, m)) bad.labelsOverlap.push(`${l.name}/${m.name}@${at}`); }));
+    for (const l of s.labels) {
+      const cut = Math.round(Math.max(EDGE - l.x0, l.x1 - (s.w - EDGE), EDGE - l.y0, l.y1 - (s.h - EDGE)));
+      if (cut > 0) bad.edge.push(`${l.name} ${cut}px past the ${EDGE}px margin`);
+      const a = s.anchors.find((x) => x.name.toLowerCase() === l.name.toLowerCase());
+      if (a) {
+        const gap = Math.round(Math.hypot(a.x - Math.max(l.x0, Math.min(a.x, l.x1)), a.y - Math.max(l.y0, Math.min(a.y, l.y1))) - a.r);
+        if (gap > LEADER) bad.leader.push(`${l.name} ${gap}px leader`);
+      }
+    }
+    const planets = s.anchors.filter((a) => real[a.name]);
+    for (const a of planets) if (2 * a.r < vp.minPlanet) bad.small.push(`${a.name} ${Math.round(2 * a.r)}px wide`);
+    for (const a of planets) for (const b of planets)
+      if (real[a.name] > real[b.name] * SIZE_ORDER && a.r < b.r - 0.5) bad.order.push(`${a.name} ${Math.round(2 * a.r)}px < ${b.name} ${Math.round(2 * b.r)}px`);
     if (s.labels.length < vp.minLabels) bad.fewLabels.push(`${s.labels.length}@${at}`);
   });
   // Worst case first, so the detail line says how bad it gets.
@@ -97,6 +116,10 @@ function geometryChecks(vp, samples) {
   add('labels clear of other discs', bad.labelsOnDiscs, 'no label covers another body');
   add('labels do not overlap', bad.labelsOverlap, 'no two labels collide');
   add(`at least ${vp.minLabels} labels`, bad.fewLabels, `min ${Math.min(...samples.map((s) => s.labels.length))} visible`);
+  add('labels inside the frame', bad.edge, `every label ${EDGE}px or more inside the stage`);
+  add('leader lines short', bad.leader, `every label within ${LEADER}px of its body`);
+  add('smallest planet readable', bad.small, `every planet at least ${vp.minPlanet}px wide`);
+  add('planet sizes keep their real order', bad.order, 'bigger worlds never draw smaller');
   return out;
 }
 
@@ -126,6 +149,21 @@ export async function validateProduct({ only } = {}) {
       for (let i = 0; i < SAMPLES; i++) { samples.push(await sample(page)); await page.waitForTimeout(700); }
       checks.push(...geometryChecks(vp, samples));
       checks.push({ layer: 'product', id: `no console errors @${vp.id}`, ok: errors.length === 0, detail: errors.length ? errors.slice(0, 2).join(' | ') : 'clean' });
+      await context.close();
+    }
+
+    // The camera re-frames as planets move; across a full Mercury lap the zoom should hold steady.
+    if (!only || only === STEADY.viewport) {
+      const vp = VIEWPORTS.find((v) => v.id === STEADY.viewport);
+      const { context, page } = await load(browser, base, vp, 'night');
+      const sun = [];
+      for (let t = 0; t < STEADY.seconds; t++) {
+        sun.push(await page.evaluate(() => (window.__labelAnchors || []).find((a) => a.name === 'Sun')?.r ?? 0));
+        await page.waitForTimeout(1000);
+      }
+      const swing = Math.max(...sun) / Math.max(1e-6, Math.min(...sun));
+      checks.push({ layer: 'product', id: `framing holds steady @${vp.id}`, ok: swing <= STEADY.maxSwing,
+        detail: `Sun diameter ${Math.round(2 * Math.min(...sun))}-${Math.round(2 * Math.max(...sun))}px over ${STEADY.seconds}s (swing ${Math.round((swing - 1) * 100)}%, max ${Math.round((STEADY.maxSwing - 1) * 100)}%)` });
       await context.close();
     }
 

@@ -2,6 +2,8 @@
 
 A product, the machine that builds it, and the mission control that steers the machine.
 
+![The product: "The Sun's Company", a 3D solar system spread](product/screenshot.jpg)
+
 - **The product** is a magazine-style 3D solar system, the kind of spread NYT Magazine or National
   Geographic would run.
 - **The machine** is a crew of three AI agents that builds the product. They talk only through a
@@ -36,6 +38,31 @@ Source: [`crew/architecture.excalidraw`](crew/architecture.excalidraw). Open it 
 - **Machine → mission control:** the logbook turns agent transcripts and the chat into the
   status feed the control panel shows.
 
+## What it looks like
+
+**Mission control.** Live status for each agent, an order box for one agent or all of them,
+quick commands, STOP ALL, and a live preview of the product.
+
+![Mission control](mission-control/screenshot.jpg)
+
+**The comic replay.** The logbook turns the team chat into a comic, one panel per message, with
+a short headline in each bubble and the full message on hover. Pick a style at the top of the
+page or with `?style=`. The characters are original designs; each style is a homage, not a copy.
+
+| Style | `?style=` | Inspired by |
+|---|---|---|
+| Spidey comic | `spidey` | Classic Spider-Man comic books |
+| Springfield | `springfield` | The Simpsons |
+| Sitcom café | `sitcom` | Friends |
+| Secret lab | `lab` | Dexter's Laboratory |
+| Snooker hall '75 | `snooker` | Hagiga B'Snuker (1975), with Hebrew captions |
+
+| | |
+|---|---|
+| ![Spidey comic](logbook/comic-spidey.jpg) | ![Springfield](logbook/comic-springfield.jpg) |
+| ![Sitcom café](logbook/comic-sitcom.jpg) | ![Secret lab](logbook/comic-lab.jpg) |
+| ![Snooker hall '75](logbook/comic-snooker.jpg) | |
+
 ## Run it
 
 You need Node 20+ and Python 3. Run each command in its own terminal, from the repo root:
@@ -62,7 +89,7 @@ python3 -m http.server 8790
 | http://localhost:5174/?name=root | Mission control: agent status, orders, STOP, live preview |
 | http://localhost:5174/?name=A | A crew member's seat in the chat (A, B, C or lead) |
 | http://localhost:8790/logbook/ | Chat history, ledger and agent logs |
-| http://localhost:8790/logbook/comic.html | The run replayed as a comic book |
+| http://localhost:8790/logbook/comic.html | The run replayed as a comic book (add `?style=springfield`, `sitcom`, `lab` or `snooker`) |
 
 The logbook pages are generated from the crew's transcripts. To keep them updated during a run:
 
@@ -82,6 +109,13 @@ brief, the prompts and `product/`. Mission control and the logbook stay the same
 From mission control, send an order to one agent or to all of them. Each agent replies `ack`
 straight away and `done` when finished, and the panel shows every order as pending or acked.
 Agents never stop on their own: **STOP ALL** ends the run.
+
+## Known issues
+
+- At some viewport sizes the Sun overlaps the fact captions (seen at 1440×1000, and in the
+  mission-control preview). The art director's review checked fixed widths by eye and missed it.
+- On narrow screens Neptune can touch the right edge, and labels hide when planets bunch up
+  (about 6 of 9 shown on a phone).
 
 ## Data and credits
 

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Solar System</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <!-- Agent A owns scene.js (3D canvas inside #stage). Agent B owns style.css, labels.js and the copy below. -->
+  <main id="spread">
+    <div id="stage"></div>
+    <div id="labels"></div>
+    <section id="copy">
+      <div class="themes" role="group" aria-label="Theme">
+        <button type="button" data-theme="night" aria-pressed="true">Night</button>
+        <button type="button" data-theme="print" aria-pressed="false">Print</button>
+        <button type="button" data-theme="natgeo" aria-pressed="false">Nat Geo</button>
+      </div>
+      <header class="masthead">
+        <p class="kicker"><span class="rule"></span>Planetary Science</p>
+        <h1 class="headline">The Sun&rsquo;s <em>Company</em></h1>
+        <p class="dek">Eight worlds, one star, four and a half billion years of orbit. A portrait of the solar system as a single family, from scorched Mercury to the cold blue edge of Neptune.</p>
+      </header>
+      <ol class="facts" id="facts" aria-label="Planet facts"></ol>
+      <footer class="colophon">
+        <p class="scale-note">Not to scale. Distances are compressed, close to the square root of each orbit, and small worlds are enlarged far more than giants, so all eight fit in one view; their order outward from the Sun is true.</p>
+        <p class="credit">Rendering: three.js &middot; Data: NASA Planetary Fact Sheet</p>
+      </footer>
+    </section>
+  </main>
+  <script type="module" src="scene.js"></script>
+  <script type="module" src="labels.js"></script>
+</body>
+</html>

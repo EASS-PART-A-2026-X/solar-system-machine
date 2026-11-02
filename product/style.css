@@ -1,0 +1,348 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Libre+Franklin:wght@400;500;600&display=swap');
+
+:root, :root[data-theme="night"] {
+  --ink: #07070a;
+  --bg-rgb: 7, 7, 10;
+  --paper: #f3efe6;
+  --paper-dim: rgba(243, 239, 230, 0.74);
+  --paper-faint: rgba(243, 239, 230, 0.48);
+  --hair: rgba(243, 239, 230, 0.55);
+  --natgeo: #ffcc00;
+  --accent: #ffcc00;
+  --label: #f3efe6;
+  --shadow: rgba(0, 0, 0, 0.88);
+  --frame: 0px;
+  --serif-display: 'Playfair Display', 'Times New Roman', serif;
+  --serif-text: 'Source Serif 4', Georgia, serif;
+  --sans: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
+  --gutter: clamp(16px, 3.2vw, 48px);
+}
+/* Print plate: warm paper, ink type, sepia hairlines */
+:root[data-theme="print"] {
+  --ink: #f3eee3;
+  --bg-rgb: 243, 238, 227;
+  --paper: #141414;
+  --paper-dim: rgba(20, 20, 20, 0.78);
+  --paper-faint: rgba(20, 20, 20, 0.68);
+  --hair: rgba(110, 78, 40, 0.6);
+  --accent: #8a6408;
+  --natgeo: #8a6408;
+  --label: #141414;
+  --shadow: transparent;
+}
+:root[data-theme="print"] .fact dd { color: #141414; }
+:root[data-theme="print"] .fact dt { color: #6b6256; }
+:root[data-theme="print"] .plabel.sun { color: #b0412e; }
+:root[data-theme="print"] .plabel, :root[data-theme="print"] .dek, :root[data-theme="print"] .headline { text-shadow: none; }
+:root[data-theme="print"] #copy::before { opacity: .6; }
+/* Nat Geo: black, yellow frame, white type, yellow labels */
+:root[data-theme="natgeo"] {
+  --ink: #000;
+  --bg-rgb: 0, 0, 0;
+  --paper: #fff;
+  --paper-dim: rgba(255, 255, 255, 0.8);
+  --paper-faint: rgba(255, 255, 255, 0.52);
+  --hair: rgba(255, 204, 0, 0.7);
+  --label: #ffcc00;
+  --frame: 12px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#spread {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Full-bleed 3D stage (A renders into it) */
+#stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+#stage canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/* Bottom scrim so the caption band never fights the starfield */
+#spread::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: clamp(200px, 30vh, 320px);
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(var(--bg-rgb), 0) 0%, rgba(var(--bg-rgb), 0.85) 55%, rgb(var(--bg-rgb)) 100%);
+}
+
+/* ---------- Labels (driven by window.__labelAnchors) ---------- */
+#labels {
+  position: absolute;
+  inset: 0;
+  z-index: 4; /* above the copy vignette so no label is greyed by it */
+  pointer-events: none;
+}
+#labels svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#labels line, #labels polyline {
+  stroke: var(--hair);
+  stroke-width: 0.75;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+#labels circle.tick { fill: var(--label); }
+.plabel {
+  position: absolute;
+  left: 0; top: 0;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  font-variant-caps: all-small-caps;
+  text-transform: lowercase;
+  font-feature-settings: 'smcp', 'c2sc';
+  color: var(--label);
+  white-space: nowrap;
+  line-height: 1;
+  text-shadow: 0 0 6px var(--shadow);
+  will-change: transform;
+}
+.plabel b { font-size: 14px; font-weight: 600; letter-spacing: 0.14em; }
+.plabel.sun { color: var(--natgeo); }
+
+/* ---------- Copy overlay ---------- */
+#copy {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  padding: var(--gutter);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas: "mast" "." "facts" "colophon";
+}
+#copy a, #copy .facts { pointer-events: auto; }
+
+.masthead { grid-area: mast; max-width: 34rem; }
+
+.kicker {
+  margin: 0 0 0.9rem;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--natgeo);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.kicker .rule {
+  display: inline-block;
+  width: 24px;
+  height: 0;
+  border-top: 1px solid var(--natgeo);
+}
+
+.headline {
+  margin: 0;
+  font-family: var(--serif-display);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 6.2vw, 5.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+  color: var(--paper);
+}
+.headline em { font-style: italic; font-weight: 500; }
+
+.dek {
+  margin: 1rem 0 0;
+  max-width: 27rem;
+  font-family: var(--serif-text);
+  font-size: clamp(0.95rem, 1.15vw, 1.1rem);
+  line-height: 1.45;
+  color: var(--paper-dim);
+}
+
+/* Fact captions: one per planet */
+.facts {
+  grid-area: facts;
+  list-style: none;
+  margin: 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--hair);
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0 clamp(10px, 1.6vw, 24px);
+}
+.fact h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--serif-display);
+  font-weight: 500;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--paper);
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.fact h3 .n {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--natgeo);
+}
+.fact dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.12rem 0.55rem;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.fact dt {
+  color: var(--paper-faint);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+}
+.fact dd { margin: 0; color: var(--paper-dim); font-variant-numeric: tabular-nums; }
+
+.colophon {
+  grid-area: colophon;
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  line-height: 14px;
+  font-family: var(--serif-text);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--paper-faint);
+}
+.colophon p { margin: 0; }
+.credit { font-family: var(--sans); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; font-size: 9.5px; }
+
+/* Medium widths: 4 x 2 caption grid */
+@media (max-width: 1100px) {
+  .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 0.8rem; }
+}
+
+/* Phone: masthead compact on top, captions in a single swipeable row */
+@media (max-width: 640px) {
+  .headline { font-size: 2.5rem; }
+  .dek { font-size: 0.9rem; max-width: 20rem; }
+  .kicker { margin-bottom: 0.6rem; }
+  .facts {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 18px;
+    margin: 0;
+    padding: 0.8rem 0 0.2rem;
+    scrollbar-width: none;
+  }
+  .facts::-webkit-scrollbar { display: none; }
+  .fact { flex: 0 0 132px; scroll-snap-align: start; }
+  .colophon { flex-direction: column; gap: 0.3rem; font-size: 10px; }
+  .plabel { font-size: 9.5px; }
+  .plabel b { font-size: 12px; }
+}
+
+/* ---------- Motion + focus ---------- */
+@keyframes rise { from { transform: translateY(10px); } to { transform: none; } }
+@keyframes draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.kicker { animation: rise .6s cubic-bezier(.2,.7,.2,1) 0s both; }
+.headline { animation: rise .7s cubic-bezier(.2,.7,.2,1) .05s both; }
+.dek { animation: rise .7s cubic-bezier(.2,.7,.2,1) .2s both; }
+.fact { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(.3s + var(--i, 0) * .06s);
+  cursor: pointer; outline: none; transition: opacity .35s ease; }
+.fact h3::after { content: ''; flex: 1; height: 0; border-top: 1px solid var(--natgeo);
+  transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.2,.7,.2,1); align-self: center; }
+.fact.on h3 { color: var(--natgeo); }
+.fact.on h3::after { transform: scaleX(1); }
+.fact.on dd { color: var(--paper); }
+body.has-focus .fact:not(.on) { opacity: .38; }
+
+.plabel { opacity: 0; }
+#labels polyline { opacity: 0; }
+#labels .on { stroke: var(--natgeo); }
+#labels circle.tick.on { fill: var(--natgeo); }
+.plabel.on { color: var(--natgeo); }
+body.has-focus .plabel:not(.on):not(.sun) { opacity: .35 !important; }
+body.has-focus #labels polyline:not(.on) { opacity: .3 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+.fact { padding: 6px 8px 8px; margin: -6px -8px -8px; border: 0.5px solid transparent; transition: opacity .35s ease, border-color .35s ease, background .35s ease; }
+.fact.on { border-color: var(--accent); background: rgba(255, 204, 0, 0.05); }
+@media (min-width: 1200px) {
+  .plabel b { font-size: 15px; }
+  .fact h3 { font-size: 1.2rem; }
+  .fact dl { font-size: 11.5px; }
+}
+
+/* Soft vignette behind the masthead so the dek stays readable over orbits */
+#copy::before {
+  content: ''; position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none;
+  width: min(760px, 100%); height: min(440px, 60vh);
+  background: radial-gradient(ellipse at 0% 0%, rgba(var(--bg-rgb),.82) 0%, rgba(var(--bg-rgb),.55) 45%, rgba(var(--bg-rgb),0) 75%);
+}
+#copy { isolation: isolate; }
+.dek, .headline { text-shadow: 0 1px 12px var(--shadow); }
+@media (max-width: 640px) {
+  .fact { margin: 0; padding: 4px 6px 6px; }
+  .facts { gap: 8px; padding-bottom: 2px; }
+}
+
+/* ---------- Theme switcher + frame ---------- */
+#spread { background: var(--ink); }
+#spread::before {
+  content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  box-shadow: inset 0 0 0 var(--frame) #ffcc00;
+}
+:root[data-theme="natgeo"] #copy { padding: calc(var(--gutter) + var(--frame)); }
+.themes {
+  position: absolute; z-index: 5;
+  top: calc(var(--gutter) + var(--frame)); right: calc(var(--gutter) + var(--frame));
+  display: flex; pointer-events: auto;
+  border: 1px solid var(--hair);
+  font-family: var(--sans);
+}
+.themes button {
+  appearance: none; border: 0; margin: 0; cursor: pointer;
+  background: transparent; color: var(--paper-faint);
+  font: 600 10px/1 var(--sans); letter-spacing: .18em; text-transform: uppercase;
+  padding: 8px 11px;
+  transition: color .2s ease, background .2s ease;
+}
+.themes button + button { border-left: 1px solid var(--hair); }
+.themes button:hover { color: var(--paper); }
+:root:not([data-theme]) .themes button[data-theme="night"],
+:root[data-theme="night"] .themes button[data-theme="night"],
+:root[data-theme="print"] .themes button[data-theme="print"],
+:root[data-theme="natgeo"] .themes button[data-theme="natgeo"] { color: var(--ink); background: var(--accent); }
+.themes button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .themes { top: auto; bottom: auto; top: calc(var(--gutter) + var(--frame) - 4px); }
+  .themes button { padding: 6px 7px; font-size: 9px; letter-spacing: .12em; }
+}
+@media (max-width: 640px) {
+  .themes { top: calc(var(--gutter) + var(--frame)); right: calc(var(--gutter) + var(--frame)); }
+  .masthead { padding-top: 38px; }
+}
+@media (max-width: 400px) {
+  .headline { font-size: 2.2rem; }
+  .plabel b { font-size: 10.5px; letter-spacing: .12em; }
+}

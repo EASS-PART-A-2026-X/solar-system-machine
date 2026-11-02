@@ -218,10 +218,11 @@ function frame(t) {
         const cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
         const edge = (q) => Math.hypot(q.x - cx, q.y - cy) - (Number(q.r) || 0) * (ringed(q.name) ? 1.6 : 1);
         const own = edge(a);
-        if (sorted.some((q) => q !== a && q.name !== SUN.name && edge(q) < own)) cost += narrow ? 400 : 120;
+        const attr = sorted.some((q) => q !== a && q.name !== SUN.name && edge(q) < own);
+        if (attr) cost += 400;
         // Reading order: within a row (above / below), label x-order follows planet x-order.
         for (const pr of placedRows) if (pr.side === side && pr.x0 > box.x0) cost += 120;
-        const cand = { cost, key, side, sx, sy, ex, ey, hx, box };
+        const cand = { cost, attr, key, side, sx, sy, ex, ey, hx, box };
         if (key === it.prev) prevCand = cand;
         if (!best || cost < best.cost) best = cand;
       }
@@ -230,9 +231,9 @@ function frame(t) {
     if (prevCand && best !== prevCand) {
       const blocked = prevCand.cost >= 100;
       if (!blocked) { best = prevCand; it.blockedAt = 0; }
-      else {
+      else if (!prevCand.attr) { // never hold a slot that reads as another planet's label
         if (!it.blockedAt) it.blockedAt = t;
-        if (t - it.blockedAt < 300) best = prevCand; else it.blockedAt = 0;
+        if (t - it.blockedAt < 600) best = prevCand; else it.blockedAt = 0;
       }
     } else it.blockedAt = 0;
     it.prev = best.key;

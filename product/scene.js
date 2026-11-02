@@ -369,10 +369,12 @@ for (const p of PLANETS) {
   const ATM = { Venus: [1.0, 0.85, 0.55], Earth: [0.35, 0.6, 1.0], Mars: [1.0, 0.6, 0.4], Jupiter: [1.0, 0.85, 0.65], Saturn: [1.0, 0.9, 0.7], Uranus: [0.55, 0.9, 1.0], Neptune: [0.35, 0.55, 1.0] };
   if (ATM[p.name]) holder.add(makeAtmosphere(r, ATM[p.name], p.name === 'Earth' ? 1.4 : 0.8));
   if (p.name === 'Earth') {
-    const moon = new THREE.Mesh(new THREE.SphereGeometry(r * 0.27, 48, 32),
+    const moon = new THREE.Mesh(new THREE.SphereGeometry(r * 0.36, 48, 32),
       new THREE.MeshStandardMaterial({ map: toTex(equirect(256, 128, painters.Mercury)), roughness: 1 }));
     holder.add(moon);
     holder.userData.moon = moon; holder.userData.moonR = r * 2.6;
+    const mo = []; for (let k = 0; k <= 96; k++) { const q = (k / 96) * Math.PI * 2; mo.push(new THREE.Vector3(Math.cos(q) * r * 2.6, 0, Math.sin(q) * r * 2.6)); }
+    holder.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(mo), new THREE.LineBasicMaterial({ color: 0x9aa6bb, transparent: true, opacity: 0.18, depthWrite: false })));
     const clouds = new THREE.Mesh(
       new THREE.SphereGeometry(r * 1.015, 96, 64),
       new THREE.MeshStandardMaterial({ map: toTex(equirect(1024, 512, painters.EarthClouds)), transparent: true, roughness: 1, depthWrite: false }));
@@ -399,10 +401,10 @@ const dotTex = glowTexture([[0, 'rgba(255,255,255,1)'], [0.35, 'rgba(255,255,255
 
 // ---------- asteroid belt (very faint) ----------
 {
-  const N = 1800, pos = new Float32Array(N * 3);
+  const N = 2800, pos = new Float32Array(N * 3);
   seed = 4242;
   for (let i = 0; i < N; i++) {
-    const au = 2.7 + (rand() + rand() + rand() - 1.5) * 0.3, th = rand() * Math.PI * 2, d = distOf(au);
+    const au = 2.7 + (rand() + rand() + rand() + rand() - 2) * 0.22, th = rand() * Math.PI * 2, d = distOf(au);
     pos[i * 3] = Math.cos(th) * d; pos[i * 3 + 1] = (rand() - 0.5) * 0.2; pos[i * 3 + 2] = Math.sin(th) * d;
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -456,6 +458,7 @@ function frame() {
   camera.fov = Math.min(90, THREE.MathUtils.radToDeg(2 * Math.atan(vTan)));
   camera.updateProjectionMatrix();
   layoutPlanets(w, h);
+  if (typeof fitGain !== 'undefined') fitGain = 0.3;
 }
 
 // Hero layout: phase each planet on its own orbit so that, on screen, they march along a
@@ -481,13 +484,12 @@ function layoutPlanets(w, h) {
       let d = (px - tx) ** 2 + (py - ty) ** 2;
       // keep every disc clear of the ones already placed (room for the sweep + a label gap)
       for (const o of placed) {
-        const gap = Math.hypot(px - o[0], py - o[1]) - (rp + o[2] + 0.6 * Math.min(rp, o[2]) + 12);
+        const gap = Math.hypot(px - o[0], py - o[1]) - (1.2 * (rp + o[2]) + 12);
         if (gap < 0) d += gap * gap * 400;
       }
       if (px - rp < 8) d += 1e7; // never park a planet against the left edge
       const prev = placed[placed.length - 1];
       if (prev && px < prev[0] + 0.8 * (rp + prev[2])) d += 1e7; // screen-x order follows AU
-      if (px + rp > w - 8) d += 1e7;
       if (d < bestD) { bestD = d; best = th; b._s = [px, py, rp]; }
     }
     placed.push(b._s);
@@ -559,6 +561,7 @@ function applyTheme(name) {
 // on-canvas) and gently zoom/pan so the moving system stays between the masthead and captions.
 const fit = { zoom: 1, pan: new THREE.Vector3() };
 const fitV = new THREE.Vector3(), fitR = new THREE.Vector3(), fitU = new THREE.Vector3();
+var fitGain = 0.3; // fast settle on load/resize, then gentle
 function autoFit() {
   const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
   if (!w || !h) return;
@@ -577,11 +580,12 @@ function autoFit() {
   const L = 0.03 * w, Rr = 0.97 * w;
   const need = Math.max((x1 - x0) / (Rr - L), (y1 - y0) / Math.max(40, bot - top));
   const want = need > 1 ? need : need < 0.82 ? need / 0.82 : 1;
-  fit.zoom = THREE.MathUtils.clamp(fit.zoom * (1 + (want - 1) * 0.04), 0.75, 2.2);
+  fit.zoom = THREE.MathUtils.clamp(fit.zoom * (1 + (want - 1) * fitGain), 0.75, 2.2);
   const dx = (L + Rr) / 2 - (x0 + x1) / 2, dy = (top + bot) / 2 - (y0 + y1) / 2;
   const dist = camera.position.distanceTo(sun.position);
   const wpp = (2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
-  fit.pan.addScaledVector(fitR, -dx * wpp * 0.03).addScaledVector(fitU, dy * wpp * 0.03);
+  fit.pan.addScaledVector(fitR, -dx * wpp * fitGain).addScaledVector(fitU, dy * wpp * fitGain);
+  fitGain = Math.max(0.035, fitGain * 0.97);
   fit.pan.clampLength(0, 40);
 }
 function tick() {

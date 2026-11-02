@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mission Control Comic</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" />
+<style>
+  :root { --ink: #111; --red: #d7263d; --blue: #1b4dd8; --yellow: #ffe14d; --paper: #f7f1e1; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font-family: 'Permanent Marker', cursive;
+    background: var(--blue) radial-gradient(#ffffff2e 1.6px, transparent 1.8px) 0 0 / 10px 10px; }
+  .cover { position: relative; margin: 20px auto 10px; max-width: 1180px; padding: 26px 24px 20px; border: 6px solid var(--ink);
+    background: var(--red) radial-gradient(#0002 2px, transparent 2.4px) 0 0 / 9px 9px; box-shadow: 10px 10px 0 var(--ink); overflow: hidden; }
+  .cover::before { content: ''; position: absolute; inset: -50%; background: repeating-conic-gradient(#fff2 0 4deg, transparent 4deg 12deg); }
+  .cover h1 { position: relative; margin: 0; font-family: 'Bangers'; font-size: clamp(40px, 8vw, 92px); line-height: .9; letter-spacing: 3px;
+    color: var(--yellow); -webkit-text-stroke: 3px var(--ink); text-shadow: 6px 6px 0 var(--ink); transform: rotate(-2deg); }
+  .cover .issue { position: relative; display: inline-block; margin-top: 10px; background: var(--ink); color: #fff; font-family: 'Bangers'; letter-spacing: 2px; padding: 4px 12px; font-size: 20px; }
+  .cover .cast { position: relative; display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .cover .cast svg { width: 84px; height: 100px; filter: drop-shadow(3px 3px 0 var(--ink)); }
+  .cover .cast div { text-align: center; color: #fff; font-family: 'Bangers'; letter-spacing: 1px; font-size: 16px; -webkit-text-stroke: .6px var(--ink); }
+
+  .flow { max-width: 1180px; margin: 0 auto 14px; display: flex; gap: 0; border: 5px solid var(--ink); background: var(--paper); box-shadow: 8px 8px 0 var(--ink); overflow-x: auto; }
+  .flow span { flex: 1; min-width: 110px; padding: 8px 10px; font-family: 'Bangers'; font-size: 19px; letter-spacing: 1px; text-align: center; border-right: 3px solid var(--ink); opacity: .35; }
+  .flow span.on { opacity: 1; background: var(--yellow); }
+  .flow span:last-child { border-right: 0; }
+
+  .page { max-width: 1180px; margin: 0 auto 40px; display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-flow: dense; gap: 14px; padding: 14px;
+    background: #fff; border: 6px solid var(--ink); box-shadow: 10px 10px 0 var(--ink); }
+  .panel { position: relative; grid-column: span 2; min-height: 290px; border: 5px solid var(--ink); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; animation: slam .4s cubic-bezier(.2, 1.6, .4, 1); }
+  .panel.wide { grid-column: span 4; } .panel.full { grid-column: span 6; min-height: 320px; }
+  .panel:nth-child(3n+1) { clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); }
+  .panel:nth-child(3n+2) { clip-path: polygon(3% 0, 100% 0, 100% 100%, 0 100%); }
+  .panel .bg { position: absolute; inset: 0; }
+  .panel .rays { position: absolute; inset: -60%; background: repeating-conic-gradient(from 0deg at 50% 60%, #fff5 0 5deg, transparent 5deg 14deg); }
+  .caption { position: absolute; top: 0; left: 0; max-width: 70%; background: var(--yellow); border: 0 solid var(--ink); border-width: 0 4px 4px 0;
+    padding: 6px 12px; font-family: 'Bangers'; font-size: 17px; letter-spacing: 1px; z-index: 3; }
+  .time { position: absolute; top: 6px; right: 10px; font-family: 'Bangers'; color: #fff; -webkit-text-stroke: .8px var(--ink); z-index: 3; }
+  .scene { position: relative; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 10px; z-index: 2; }
+  .hero svg { width: 150px; height: 180px; display: block; filter: drop-shadow(4px 4px 0 #0007); }
+  .panel.full .hero svg { width: 190px; height: 228px; }
+  .bubble { position: relative; align-self: center; margin: 0 6px 70px 0; max-width: 62%; background: #fff; border: 4px solid var(--ink); border-radius: 50% / 46%;
+    padding: 18px 22px; text-align: center; font-size: clamp(16px, 2vw, 21px); line-height: 1.15; text-transform: uppercase; box-shadow: 4px 4px 0 #0005; }
+  .bubble::after { content: ''; position: absolute; left: -26px; bottom: 6px; border: 14px solid transparent; border-right: 26px solid var(--ink); transform: rotate(-25deg); }
+  .bubble.shout { border-radius: 0; background: var(--yellow); font-family: 'Bangers'; font-size: clamp(22px, 3vw, 32px); letter-spacing: 1px;
+    clip-path: polygon(0 10%, 8% 0, 20% 8%, 35% 0, 50% 7%, 66% 0, 80% 8%, 93% 0, 100% 14%, 96% 50%, 100% 88%, 88% 100%, 70% 92%, 50% 100%, 30% 92%, 12% 100%, 0 86%, 4% 50%); padding: 26px 30px; }
+  .bubble.shout::after { display: none; }
+  .fx { position: absolute; z-index: 4; top: 34px; right: 16px; font-family: 'Bangers'; font-size: clamp(34px, 5vw, 58px); letter-spacing: 2px;
+    color: var(--yellow); -webkit-text-stroke: 2.5px var(--ink); text-shadow: 4px 4px 0 var(--red); transform: rotate(-10deg); }
+  .fx::before { content: ''; position: absolute; inset: -24px -30px; z-index: -1; background: var(--red);
+    clip-path: polygon(50% 0, 61% 30%, 98% 20%, 72% 48%, 100% 74%, 62% 68%, 54% 100%, 40% 70%, 4% 88%, 28% 54%, 0 26%, 36% 32%); }
+  .tag { font-family: 'Bangers'; letter-spacing: 1px; color: #fff; -webkit-text-stroke: .8px var(--ink); font-size: 20px; margin: 0 0 6px 4px; }
+  .panel:not(.wide):not(.full) .scene { flex-direction: column-reverse; align-items: center; padding-top: 44px; }
+  .panel:not(.wide):not(.full) .bubble { max-width: 92%; margin: 0 0 18px; }
+  .panel:not(.wide):not(.full) .bubble::after { left: 40%; bottom: -24px; transform: rotate(-90deg); }
+  .panel:not(.wide):not(.full) .hero svg { width: 110px; height: 132px; }
+  .panel:not(.wide):not(.full) .fx { font-size: 30px; top: auto; bottom: 30px; right: 14px; }
+  footer { text-align: center; color: #fff; font-family: 'Bangers'; letter-spacing: 2px; padding-bottom: 30px; font-size: 20px; }
+  .talking .mouth { animation: talk .22s infinite alternate; transform-box: fill-box; transform-origin: center; }
+  @keyframes talk { to { transform: scaleY(.25); } }
+  @keyframes slam { from { transform: scale(1.25) rotate(3deg); opacity: 0; } }
+  @media (max-width: 700px) { .page { grid-template-columns: 1fr; } .panel, .panel.wide, .panel.full { grid-column: span 1; }
+    .hero svg { width: 110px; height: 132px; } .bubble { max-width: 70%; margin-bottom: 50px; } }
+</style>
+</head>
+<body>
+<section class="cover">
+  <h1>THE AMAZING<br>MISSION CONTROL</h1>
+  <div class="issue" id="issue">ISSUE #1 · THE SUN'S COMPANY</div>
+  <div class="cast" id="cast"></div>
+</section>
+<nav class="flow" id="flow"></nav>
+<main class="page" id="page"></main>
+<footer id="foot"></footer>
+
+<script>
+// Original characters, Springfield-inspired yellow cartoon look (not the real Simpsons cast).
+const CAST = {
+  A:     { name: 'AXEL',     tag: 'THE BUILDER',    shirt: '#d7263d', hair: 'spikes', bg: '#ff8a3d' },
+  B:     { name: 'BEA',      tag: 'THE WORDSMITH',  shirt: '#1b4dd8', hair: 'beehive', bg: '#3dc1ff' },
+  C:     { name: 'CYRUS',    tag: 'THE CRITIC',     shirt: '#2b9348', hair: 'beret', bg: '#9be15d' },
+  lead:  { name: 'CHIEF',    tag: 'THE PLANNER',    shirt: '#6a3df0', hair: 'bald', bg: '#c39bff' },
+  root:  { name: 'THE BOSS', tag: 'SUPREME RULER',  shirt: '#111',    hair: 'crown', bg: '#ffe14d' },
+  human: { name: 'GUEST',    tag: 'A VOICE',        shirt: '#7a7a7a', hair: 'cap', bg: '#d0d0d0' },
+};
+
+function hero(c, talking, mood = 'happy') {
+  const hair = {
+    spikes:  '<path d="M44 52 L46 18 L58 40 L66 8 L76 36 L88 6 L94 36 L108 14 L106 42 L118 30 L112 58 Z" fill="#2a1a0e" stroke="#111" stroke-width="3" stroke-linejoin="round"/>',
+    beehive: '<path d="M44 58 Q36 0 82 -6 Q130 0 120 58 Q110 34 82 32 Q54 34 44 58Z" fill="#2f5bff" stroke="#111" stroke-width="3"/><path d="M60 30 Q82 10 104 30" stroke="#1b3bd0" stroke-width="3" fill="none"/>',
+    beret:   '<ellipse cx="82" cy="34" rx="40" ry="13" fill="#222" stroke="#111" stroke-width="3" transform="rotate(-8 82 34)"/><path d="M80 20 l2 -8" stroke="#111" stroke-width="4"/>',
+    bald:    '<path d="M60 40 Q64 28 70 40 M74 36 Q78 24 84 36" stroke="#111" stroke-width="3" fill="none"/>',
+    crown:   '<path d="M46 46 L50 10 L66 30 L82 2 L98 30 L114 10 L118 46 Z" fill="#ffd000" stroke="#111" stroke-width="3" stroke-linejoin="round"/><circle cx="82" cy="20" r="4" fill="#d7263d" stroke="#111" stroke-width="2"/><circle cx="58" cy="30" r="3" fill="#1b4dd8"/><circle cx="106" cy="30" r="3" fill="#1b4dd8"/>',
+    cap:     '<path d="M44 50 Q46 18 82 16 Q118 18 120 50 Z" fill="#7a7a7a" stroke="#111" stroke-width="3"/><path d="M116 46 Q138 46 144 54" stroke="#111" stroke-width="6" fill="none"/>',
+  }[c.hair];
+  const brows = mood === 'angry'
+    ? '<path d="M54 56 L76 64 M110 56 L88 64" stroke="#111" stroke-width="4"/>'
+    : '<path d="M54 58 Q64 52 76 58 M88 58 Q98 52 110 58" stroke="#111" stroke-width="3" fill="none"/>';
+  return `<svg viewBox="0 0 164 200" class="${talking ? 'talking' : ''}">
+    <defs><linearGradient id="skin" x1="0" x2="1"><stop offset="0" stop-color="#ffe45c"/><stop offset=".7" stop-color="#ffd90f"/><stop offset="1" stop-color="#e8b800"/></linearGradient></defs>
+    <path d="M30 200 Q32 150 82 144 Q132 150 134 200 Z" fill="${c.shirt}" stroke="#111" stroke-width="3"/>
+    <path d="M68 146 L82 162 L96 146" fill="#fff" stroke="#111" stroke-width="3"/>
+    <rect x="68" y="124" width="28" height="24" fill="url(#skin)" stroke="#111" stroke-width="3"/>
+    <ellipse cx="44" cy="88" rx="8" ry="12" fill="url(#skin)" stroke="#111" stroke-width="3"/>
+    <path d="M46 132 Q40 60 50 42 Q82 28 114 42 Q122 70 118 132 Q82 142 46 132Z" fill="url(#skin)" stroke="#111" stroke-width="3"/>
+    ${hair}
+    ${brows}
+    <circle cx="66" cy="76" r="15" fill="#fff" stroke="#111" stroke-width="3"/>
+    <circle cx="98" cy="76" r="15" fill="#fff" stroke="#111" stroke-width="3"/>
+    <circle cx="69" cy="78" r="4" fill="#111"/><circle cx="95" cy="78" r="4" fill="#111"/>
+    <circle cx="70.5" cy="76.5" r="1.3" fill="#fff"/><circle cx="96.5" cy="76.5" r="1.3" fill="#fff"/>
+    <path d="M51 70 Q66 62 81 70" fill="url(#skin)" stroke="#111" stroke-width="2.5"/>
+    <path d="M83 70 Q98 62 113 70" fill="url(#skin)" stroke="#111" stroke-width="2.5"/>
+    <path d="M80 86 Q74 100 86 102" fill="url(#skin)" stroke="#111" stroke-width="3"/>
+    <path d="M52 108 Q82 100 114 108 Q118 134 82 136 Q50 134 52 108Z" fill="#d9a066" stroke="#111" stroke-width="3"/>
+    <g class="mouth"><path d="M64 116 Q82 130 100 116 Q82 122 64 116Z" fill="#5b1414" stroke="#111" stroke-width="3"/></g>
+  </svg>`;
+}
+
+// One message -> a short story beat: { kind, line, fx, caption }
+const BEATS = [
+  { re: /^KICKOFF/i,                 kind: 'kickoff', caption: 'IT ALL BEGAN WITH A PLAN…',    fx: 'BEGIN!' },
+  { re: /\bstop\b/i,                 kind: 'stop',    caption: 'THE BOSS HAS SPOKEN!',          fx: 'HALT!' },
+  { re: /approved/i,                 kind: 'approve', caption: 'AT LAST…',                      fx: 'APPROVED!' },
+  { re: /ack root/i,                 kind: 'ack',     caption: 'ORDERS RECEIVED!',              fx: 'YES BOSS!' },
+  { re: /\b(done|finished)\b/i,      kind: 'done',    caption: 'MISSION COMPLETE!',             fx: 'DONE!' },
+  { re: /C\s*->|round \d|critique/i, kind: 'review',  caption: 'THE CRITIC STRIKES!',           fx: 'CRITIQUE!' },
+  { re: /\bv\d+\b.*\bup\b|reload/i,  kind: 'ship',    caption: 'MEANWHILE, IN THE LAB…',        fx: 'ZING!' },
+  { re: /starting|on (sun|outer)|here,|joins/i, kind: 'start', caption: 'A HERO SUITS UP!',     fx: 'WHOOSH!' },
+  { re: /fix|bug|error|crash|broke/i, kind: 'fix',    caption: 'TROUBLE IN THE LAB!',           fx: 'KRAK!' },
+];
+const FLOW = [['kickoff', 'PLAN'], ['start', 'SUIT UP'], ['ship', 'BUILD'], ['review', 'CRITIQUE'], ['fix', 'FIX'], ['ack', 'BOSS ORDERS'], ['approve', 'APPROVED'], ['done', 'DONE']];
+
+// Boil a wordy message down to a punchy headline: first clause, max ~8 words.
+function punch(text) {
+  let t = text.replace(/^(C\s*->\s*[AB](\s*\(round \d+\))?:?\s*)/i, '')
+              .replace(/\(.*?\)/g, '').replace(/\breload\b[:,]?/ig, '').replace(/https?:\S+/g, '').trim();
+  t = t.split(/(?<=[.!?;:])\s|\s[-–]\s|,\s(?=[a-z])/)[0].replace(/^\d\)\s*/, '').replace(/[.;:,]+$/, '');
+  const words = t.split(/\s+/).filter(Boolean);
+  return words.length > 8 ? words.slice(0, 8).join(' ') + '…' : (t || '…');
+}
+
+function parse(line) {
+  const m = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.*)$/s);
+  if (!m) return { time: '', who: 'lead', text: line };
+  return { time: m[1].replace(/:\d\d\s/, ' '), who: CAST[m[2]] ? m[2] : 'human', text: m[3].replace(new RegExp(`^${m[2]}:\\s*`), '') };
+}
+
+const esc = (s) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+let lastLen = -1;
+async function render() {
+  let lines;
+  try { lines = await (await fetch('chat.json', { cache: 'no-store' })).json(); } catch { return; }
+  if (lines.length === lastLen) return;
+  lastLen = lines.length;
+  const beats = lines.map(parse).filter((m) => m.text.trim() && !/^TEAM CHAT/.test(m.text)).map((m) => {
+    const b = BEATS.find((x) => x.re.test(m.text)) || { kind: 'talk', caption: '', fx: '' };
+    return { ...m, ...b, line: punch(m.text), boss: m.who === 'root' };
+  });
+  const seen = new Set(beats.map((b) => b.kind));
+  document.getElementById('flow').innerHTML = FLOW.map(([k, label]) => `<span class="${seen.has(k) ? 'on' : ''}">${label}</span>`).join('');
+  document.getElementById('issue').textContent = `ISSUE #1 · THE SUN'S COMPANY · ${beats.length} PANELS`;
+  document.getElementById('page').innerHTML = beats.slice().reverse().map((b, i) => {
+    const c = CAST[b.who];
+    const big = b.boss || ['kickoff', 'approve', 'stop'].includes(b.kind);
+    const size = big ? 'full' : (['review', 'ship'].includes(b.kind) ? 'wide' : '');
+    return `<article class="panel ${size}">
+      <div class="bg" style="background:${c.bg} radial-gradient(#0003 1.8px, transparent 2px) 0 0 / 9px 9px"></div>
+      ${b.fx ? '<div class="rays"></div>' : ''}
+      ${b.caption ? `<div class="caption">${b.caption}</div>` : ''}
+      <span class="time">${esc(b.time)}</span>
+      ${b.fx ? `<div class="fx">${b.fx}</div>` : ''}
+      <div class="scene">
+        <div class="hero">${hero(c, i === 0, b.kind === 'review' || b.kind === 'stop' ? 'angry' : 'happy')}<div class="tag">${c.name}</div></div>
+        <div class="bubble ${big ? 'shout' : ''}" title="${esc(b.text)}">${esc(b.line)}</div>
+      </div>
+    </article>`;
+  }).join('');
+  document.getElementById('foot').textContent = `NEWEST PANEL FIRST · HOVER A BUBBLE FOR THE FULL MESSAGE · UPDATED ${new Date().toLocaleTimeString()}`;
+}
+
+document.getElementById('cast').innerHTML = Object.values(CAST).map((c) => `<div>${hero(c, false)}<br>${c.name}</div>`).join('');
+render();
+setInterval(render, 5000);
+</script>
+</body>
+</html>

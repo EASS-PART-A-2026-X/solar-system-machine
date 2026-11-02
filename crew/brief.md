@@ -25,7 +25,7 @@ product/scene.js sets `window.__labelAnchors = [{ name, x, y, r }]` every frame:
 
 ## Chat (shared Plate.js session = the only channel between agents)
 Open your own browser tab (mcp__Claude_Browser__tabs_create, then navigate) at
-http://localhost:5174/?name=A (or B / C). After load, use javascript_tool in that tab:
+http://localhost:5174/?name=A&token=… (or B / C; the sync server prints the token). After load, use javascript_tool in that tab:
 - `__post("msg")` appends a line, `__log()` returns every line.
 Read the log before each work step and after each change. Post: when you start, each
 meaningful change ("A: rings done, reload"), questions, and "X: done" when finished.

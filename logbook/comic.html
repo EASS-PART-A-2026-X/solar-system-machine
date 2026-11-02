@@ -4,24 +4,49 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Mission Control Comic</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&family=Luckiest+Guy&family=Bebas+Neue&family=Patrick+Hand&family=Fredoka:wght@500;700&family=Secular+One&family=Varela+Round&display=swap" />
 <style>
-  :root { --ink: #111; --red: #d7263d; --blue: #1b4dd8; --yellow: #ffe14d; --paper: #f7f1e1; }
+  :root { --ink: #111; --red: #d7263d; --blue: #1b4dd8; --yellow: #ffe14d; --paper: #f7f1e1; --display: 'Bangers'; --body: 'Permanent Marker';
+    --page-bg: var(--blue) radial-gradient(#ffffff2e 1.6px, transparent 1.8px) 0 0 / 10px 10px;
+    --cover-bg: var(--red) radial-gradient(#0002 2px, transparent 2.4px) 0 0 / 9px 9px; --title: var(--yellow); --dots: radial-gradient(#0003 1.8px, transparent 2px) 0 0 / 9px 9px; }
+  /* Springfield: sky, clouds, chunky yellow lettering. */
+  [data-style="springfield"] { --red: #f14e28; --blue: #6ec3f4; --yellow: #ffd90f; --paper: #fffbe6; --display: 'Luckiest Guy';
+    --page-bg: radial-gradient(ellipse 140px 50px at 15% 12%, #fff 98%, transparent) , radial-gradient(ellipse 200px 60px at 70% 30%, #fff 98%, transparent), radial-gradient(ellipse 160px 50px at 35% 70%, #fff 98%, transparent), linear-gradient(#5ab4ee, #a9dcfb);
+    --cover-bg: linear-gradient(#5ab4ee, #a9dcfb); --dots: none; }
+  /* Sitcom café: purple apartment wall, warm couch tones, episode-title captions. */
+  [data-style="sitcom"] { --ink: #2a1c12; --red: #c8442f; --blue: #5b3f86; --yellow: #f2b632; --paper: #fbf3e4; --display: 'Bebas Neue'; --body: 'Patrick Hand';
+    --page-bg: repeating-linear-gradient(90deg, #5b3f86 0 38px, #644690 38px 40px); --cover-bg: #221a14; --title: #fbf3e4; --dots: none; }
+  /* Secret lab: blueprint grid, console panel, 90s cartoon rounded type. */
+  [data-style="lab"] { --ink: #14202b; --red: #ff4f64; --blue: #0d3b52; --yellow: #7cf2c4; --paper: #e8f6f3; --display: 'Fredoka'; --body: 'Varela Round';
+    --page-bg: #0d3b52 linear-gradient(#ffffff14 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #ffffff14 1px, transparent 1px) 0 0 / 24px 24px;
+    --cover-bg: linear-gradient(135deg, #1e2a38, #2c3e50); --title: #7cf2c4; --dots: linear-gradient(#0000000d 1px, transparent 1px) 0 0 / 14px 14px; }
+  /* Snooker hall, 1975: green felt, brown-and-mustard film poster, Hebrew captions. */
+  [data-style="snooker"] { --ink: #2b1a0e; --red: #c0392b; --blue: #0b6b3a; --yellow: #f4c542; --paper: #f6e7c8; --display: 'Secular One'; --body: 'Secular One';
+    --page-bg: radial-gradient(ellipse at center, #128a4c, #08502b 70%, #05351d);
+    --cover-bg: linear-gradient(160deg, #7a3e12, #c46a1c 55%, #e9a23b); --title: #f6e7c8; --dots: radial-gradient(#ffffff10 1.4px, transparent 1.6px) 0 0 / 8px 8px; }
+
   * { box-sizing: border-box; }
-  body { margin: 0; color: var(--ink); font-family: 'Permanent Marker', cursive;
-    background: var(--blue) radial-gradient(#ffffff2e 1.6px, transparent 1.8px) 0 0 / 10px 10px; }
-  .cover { position: relative; margin: 20px auto 10px; max-width: 1180px; padding: 26px 24px 20px; border: 6px solid var(--ink);
-    background: var(--red) radial-gradient(#0002 2px, transparent 2.4px) 0 0 / 9px 9px; box-shadow: 10px 10px 0 var(--ink); overflow: hidden; }
+  body { margin: 0; color: var(--ink); font-family: var(--body), cursive; background: var(--page-bg); min-height: 100vh; }
+  .styles { max-width: 1180px; margin: 14px auto 0; display: flex; flex-wrap: wrap; gap: 8px; padding: 0 4px; }
+  .styles button { font: 600 15px/1 system-ui, sans-serif; padding: 8px 12px; border: 3px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; box-shadow: 3px 3px 0 var(--ink); }
+  .styles button.on { background: var(--yellow); }
+  .cover { position: relative; margin: 14px auto 10px; max-width: 1180px; padding: 26px 24px 20px; border: 6px solid var(--ink);
+    background: var(--cover-bg); box-shadow: 10px 10px 0 var(--ink); overflow: hidden; }
   .cover::before { content: ''; position: absolute; inset: -50%; background: repeating-conic-gradient(#fff2 0 4deg, transparent 4deg 12deg); }
-  .cover h1 { position: relative; margin: 0; font-family: 'Bangers'; font-size: clamp(40px, 8vw, 92px); line-height: .9; letter-spacing: 3px;
-    color: var(--yellow); -webkit-text-stroke: 3px var(--ink); text-shadow: 6px 6px 0 var(--ink); transform: rotate(-2deg); }
-  .cover .issue { position: relative; display: inline-block; margin-top: 10px; background: var(--ink); color: #fff; font-family: 'Bangers'; letter-spacing: 2px; padding: 4px 12px; font-size: 20px; }
+  [data-style="sitcom"] .cover::before, [data-style="lab"] .cover::before { display: none; }
+  .cover h1 { position: relative; margin: 0; font-family: var(--display); font-size: clamp(40px, 8vw, 92px); line-height: .95; letter-spacing: 3px;
+    color: var(--title); -webkit-text-stroke: 3px var(--ink); text-shadow: 6px 6px 0 var(--ink); transform: rotate(-2deg); }
+  [data-style="sitcom"] .cover h1 { -webkit-text-stroke: 0; text-shadow: none; transform: none; letter-spacing: 6px; }
+  [data-style="sitcom"] .cover h1 i { font-style: normal; display: inline-block; width: .18em; height: .18em; border-radius: 50%; margin: 0 .16em .14em; vertical-align: middle; }
+  [data-style="lab"] .cover h1 { -webkit-text-stroke: 0; text-shadow: 0 0 18px #7cf2c4aa; transform: none; }
+  [data-style="snooker"] .cover h1 { -webkit-text-stroke: 0; text-shadow: 5px 5px 0 #4a2208; transform: rotate(-1deg); }
+  .cover .issue { position: relative; display: inline-block; margin-top: 10px; background: var(--ink); color: #fff; font-family: var(--display); letter-spacing: 2px; padding: 4px 12px; font-size: 20px; }
   .cover .cast { position: relative; display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
   .cover .cast svg { width: 84px; height: 100px; filter: drop-shadow(3px 3px 0 var(--ink)); }
-  .cover .cast div { text-align: center; color: #fff; font-family: 'Bangers'; letter-spacing: 1px; font-size: 16px; -webkit-text-stroke: .6px var(--ink); }
+  .cover .cast div { text-align: center; color: #fff; font-family: var(--display); letter-spacing: 1px; font-size: 16px; -webkit-text-stroke: .6px var(--ink); }
 
   .flow { max-width: 1180px; margin: 0 auto 14px; display: flex; gap: 0; border: 5px solid var(--ink); background: var(--paper); box-shadow: 8px 8px 0 var(--ink); overflow-x: auto; }
-  .flow span { flex: 1; min-width: 110px; padding: 8px 10px; font-family: 'Bangers'; font-size: 19px; letter-spacing: 1px; text-align: center; border-right: 3px solid var(--ink); opacity: .35; }
+  .flow span { flex: 1; min-width: 110px; padding: 8px 10px; font-family: var(--display); font-size: 19px; letter-spacing: 1px; text-align: center; border-right: 3px solid var(--ink); opacity: .35; }
   .flow span.on { opacity: 1; background: var(--yellow); }
   .flow span:last-child { border-right: 0; }
 
@@ -29,33 +54,46 @@
     background: #fff; border: 6px solid var(--ink); box-shadow: 10px 10px 0 var(--ink); }
   .panel { position: relative; grid-column: span 2; min-height: 290px; border: 5px solid var(--ink); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; animation: slam .4s cubic-bezier(.2, 1.6, .4, 1); }
   .panel.wide { grid-column: span 4; } .panel.full { grid-column: span 6; min-height: 320px; }
-  .panel:nth-child(3n+1) { clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); }
-  .panel:nth-child(3n+2) { clip-path: polygon(3% 0, 100% 0, 100% 100%, 0 100%); }
+  [data-style="spidey"] .panel:nth-child(3n+1) { clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); }
+  [data-style="spidey"] .panel:nth-child(3n+2) { clip-path: polygon(3% 0, 100% 0, 100% 100%, 0 100%); }
+  [data-style="sitcom"] .panel, [data-style="lab"] .panel { border-radius: 14px; }
   .panel .bg { position: absolute; inset: 0; }
   .panel .rays { position: absolute; inset: -60%; background: repeating-conic-gradient(from 0deg at 50% 60%, #fff5 0 5deg, transparent 5deg 14deg); }
+  [data-style="sitcom"] .panel .rays, [data-style="lab"] .panel .rays { display: none; }
   .caption { position: absolute; top: 0; left: 0; max-width: 70%; background: var(--yellow); border: 0 solid var(--ink); border-width: 0 4px 4px 0;
-    padding: 6px 12px; font-family: 'Bangers'; font-size: 17px; letter-spacing: 1px; z-index: 3; }
-  .time { position: absolute; top: 6px; right: 10px; font-family: 'Bangers'; color: #fff; -webkit-text-stroke: .8px var(--ink); z-index: 3; }
+    padding: 6px 12px; font-family: var(--display); font-size: 17px; letter-spacing: 1px; z-index: 3; }
+  [data-style="sitcom"] .caption { background: #fbf3e4; font-family: var(--body); font-size: 18px; letter-spacing: 0; text-transform: none; }
+  [data-style="snooker"] .caption { left: auto; right: 0; border-width: 0 0 4px 4px; direction: rtl; }
+  [data-style="snooker"] .time { left: 10px; right: auto; }
+  .time { position: absolute; top: 6px; right: 10px; font-family: var(--display); color: #fff; -webkit-text-stroke: .8px var(--ink); z-index: 3; }
   .scene { position: relative; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 10px; z-index: 2; }
   .hero svg { width: 150px; height: 180px; display: block; filter: drop-shadow(4px 4px 0 #0007); }
   .panel.full .hero svg { width: 190px; height: 228px; }
   .bubble { position: relative; align-self: center; margin: 0 6px 70px 0; max-width: 62%; background: #fff; border: 4px solid var(--ink); border-radius: 50% / 46%;
     padding: 18px 22px; text-align: center; font-size: clamp(16px, 2vw, 21px); line-height: 1.15; text-transform: uppercase; box-shadow: 4px 4px 0 #0005; }
+  [data-style="sitcom"] .bubble, [data-style="lab"] .bubble { text-transform: none; border-radius: 22px; font-size: clamp(17px, 2vw, 22px); }
   .bubble::after { content: ''; position: absolute; left: -26px; bottom: 6px; border: 14px solid transparent; border-right: 26px solid var(--ink); transform: rotate(-25deg); }
-  .bubble.shout { border-radius: 0; background: var(--yellow); font-family: 'Bangers'; font-size: clamp(22px, 3vw, 32px); letter-spacing: 1px;
+  .bubble.shout { border-radius: 0; background: var(--yellow); font-family: var(--display); font-size: clamp(22px, 3vw, 32px); letter-spacing: 1px;
     clip-path: polygon(0 10%, 8% 0, 20% 8%, 35% 0, 50% 7%, 66% 0, 80% 8%, 93% 0, 100% 14%, 96% 50%, 100% 88%, 88% 100%, 70% 92%, 50% 100%, 30% 92%, 12% 100%, 0 86%, 4% 50%); padding: 26px 30px; }
   .bubble.shout::after { display: none; }
-  .fx { position: absolute; z-index: 4; top: 34px; right: 16px; font-family: 'Bangers'; font-size: clamp(34px, 5vw, 58px); letter-spacing: 2px;
+  .fx { position: absolute; z-index: 4; top: 34px; right: 16px; font-family: var(--display); font-size: clamp(34px, 5vw, 58px); letter-spacing: 2px;
     color: var(--yellow); -webkit-text-stroke: 2.5px var(--ink); text-shadow: 4px 4px 0 var(--red); transform: rotate(-10deg); }
   .fx::before { content: ''; position: absolute; inset: -24px -30px; z-index: -1; background: var(--red);
     clip-path: polygon(50% 0, 61% 30%, 98% 20%, 72% 48%, 100% 74%, 62% 68%, 54% 100%, 40% 70%, 4% 88%, 28% 54%, 0 26%, 36% 32%); }
-  .tag { font-family: 'Bangers'; letter-spacing: 1px; color: #fff; -webkit-text-stroke: .8px var(--ink); font-size: 20px; margin: 0 0 6px 4px; }
+  /* Sitcom: the "effect" is a stage direction, not a burst. */
+  [data-style="sitcom"] .fx { transform: none; -webkit-text-stroke: 0; text-shadow: none; color: #fbf3e4; font-family: var(--body); font-size: clamp(20px, 2.4vw, 26px); letter-spacing: 0;
+    background: #221a14cc; padding: 4px 12px; border-radius: 6px; }
+  [data-style="sitcom"] .fx::before { display: none; }
+  [data-style="lab"] .fx { color: #14202b; -webkit-text-stroke: 0; text-shadow: none; transform: rotate(-4deg); }
+  [data-style="lab"] .fx::before { background: #7cf2c4; clip-path: none; border: 4px solid #14202b; border-radius: 12px; inset: -8px -14px; }
+  [data-style="snooker"] .fx { right: auto; left: 16px; transform: rotate(8deg); }
+  .tag { font-family: var(--display); letter-spacing: 1px; color: #fff; -webkit-text-stroke: .8px var(--ink); font-size: 20px; margin: 0 0 6px 4px; }
   .panel:not(.wide):not(.full) .scene { flex-direction: column-reverse; align-items: center; padding-top: 44px; }
   .panel:not(.wide):not(.full) .bubble { max-width: 92%; margin: 0 0 18px; }
   .panel:not(.wide):not(.full) .bubble::after { left: 40%; bottom: -24px; transform: rotate(-90deg); }
   .panel:not(.wide):not(.full) .hero svg { width: 110px; height: 132px; }
-  .panel:not(.wide):not(.full) .fx { font-size: 30px; top: auto; bottom: 30px; right: 14px; }
-  footer { text-align: center; color: #fff; font-family: 'Bangers'; letter-spacing: 2px; padding-bottom: 30px; font-size: 20px; }
+  .panel:not(.wide):not(.full) .fx { font-size: 30px; top: auto; bottom: 30px; right: 14px; left: auto; }
+  footer { text-align: center; color: #fff; font-family: var(--display); letter-spacing: 2px; padding-bottom: 30px; font-size: 20px; }
   .talking .mouth { animation: talk .22s infinite alternate; transform-box: fill-box; transform-origin: center; }
   @keyframes talk { to { transform: scaleY(.25); } }
   @keyframes slam { from { transform: scale(1.25) rotate(3deg); opacity: 0; } }
@@ -64,9 +102,10 @@
 </style>
 </head>
 <body>
+<nav class="styles" id="styles"></nav>
 <section class="cover">
-  <h1>THE AMAZING<br>MISSION CONTROL</h1>
-  <div class="issue" id="issue">ISSUE #1 · THE SUN'S COMPANY</div>
+  <h1 id="title"></h1>
+  <div class="issue" id="issue"></div>
   <div class="cast" id="cast"></div>
 </section>
 <nav class="flow" id="flow"></nav>
@@ -74,17 +113,80 @@
 <footer id="foot"></footer>
 
 <script>
-// Original characters, Springfield-inspired yellow cartoon look (not the real Simpsons cast).
+// The crew. All characters are original designs; each style only changes how they are drawn.
 const CAST = {
-  A:     { name: 'AXEL',     tag: 'THE BUILDER',    shirt: '#d7263d', hair: 'spikes', bg: '#ff8a3d' },
-  B:     { name: 'BEA',      tag: 'THE WORDSMITH',  shirt: '#1b4dd8', hair: 'beehive', bg: '#3dc1ff' },
-  C:     { name: 'CYRUS',    tag: 'THE CRITIC',     shirt: '#2b9348', hair: 'beret', bg: '#9be15d' },
-  lead:  { name: 'CHIEF',    tag: 'THE PLANNER',    shirt: '#6a3df0', hair: 'bald', bg: '#c39bff' },
-  root:  { name: 'THE BOSS', tag: 'SUPREME RULER',  shirt: '#111',    hair: 'crown', bg: '#ffe14d' },
-  human: { name: 'GUEST',    tag: 'A VOICE',        shirt: '#7a7a7a', hair: 'cap', bg: '#d0d0d0' },
+  A:     { name: 'AXEL',     shirt: '#d7263d', hair: 'spikes',  bg: '#ff8a3d', tone: '#e0ac69' },
+  B:     { name: 'BEA',      shirt: '#1b4dd8', hair: 'beehive', bg: '#3dc1ff', tone: '#f1c27d' },
+  C:     { name: 'CYRUS',    shirt: '#2b9348', hair: 'beret',   bg: '#9be15d', tone: '#c68642' },
+  lead:  { name: 'CHIEF',    shirt: '#6a3df0', hair: 'bald',    bg: '#c39bff', tone: '#ffdbac' },
+  root:  { name: 'THE BOSS', shirt: '#111',    hair: 'crown',   bg: '#ffe14d', tone: '#8d5524' },
+  human: { name: 'GUEST',    shirt: '#7a7a7a', hair: 'cap',     bg: '#d0d0d0', tone: '#f1c27d' },
 };
 
+const KINDS = ['kickoff', 'stop', 'approve', 'ack', 'done', 'review', 'ship', 'start', 'fix'];
+const zip = (vals) => Object.fromEntries(KINDS.map((k, i) => [k, vals[i]]));
+
+// Each style: label, inspiration (shown on hover), cover, story captions, sound effects, flow labels,
+// and how characters are drawn (skin, muzzle, extra props, panel colours).
+const STYLES = {
+  spidey: {
+    label: 'Spidey comic', inspired: 'Inspired by classic Spider-Man comic books',
+    title: 'THE AMAZING<br>MISSION CONTROL', issue: (n) => `ISSUE #1 · THE SUN'S COMPANY · ${n} PANELS`,
+    caption: zip(['IT ALL BEGAN WITH A PLAN…', 'THE BOSS HAS SPOKEN!', 'AT LAST…', 'ORDERS RECEIVED!', 'MISSION COMPLETE!', 'THE CRITIC STRIKES!', 'MEANWHILE, IN THE LAB…', 'A HERO SUITS UP!', 'TROUBLE IN THE LAB!']),
+    fx: zip(['BEGIN!', 'HALT!', 'APPROVED!', 'YES BOSS!', 'DONE!', 'CRITIQUE!', 'ZING!', 'WHOOSH!', 'KRAK!']),
+    flow: ['PLAN', 'SUIT UP', 'BUILD', 'CRITIQUE', 'FIX', 'BOSS ORDERS', 'APPROVED', 'DONE'],
+    skin: () => ['#ffe45c', '#ffd90f', '#e8b800'], muzzle: '#d9a066', props: () => '', panel: (c) => c.bg,
+  },
+  springfield: {
+    label: 'Springfield', inspired: 'Inspired by The Simpsons (original characters)',
+    title: 'MISSION CONTROL:<br>THE YELLOW FILES', issue: (n) => `SEASON 1 · EPISODE "THE SUN'S COMPANY" · ${n} SCENES`,
+    caption: zip(['MEANWHILE, AT THE PLANT…', 'THE BOSS IS FURIOUS!', 'AND THE CROWD GOES WILD…', 'RIGHT AWAY, BOSS!', 'QUITTING TIME!', 'THE CRITIC HAS NOTES…', 'BACK AT THE GARAGE…', 'ANOTHER DAY AT WORK…', 'UH-OH…']),
+    fx: zip(['DING!', 'NO!', 'WOOHOO!', 'OKAY!', 'YAY!', 'HMMM…', 'BOING!', 'YAWN!', 'ARGH!']),
+    flow: ['PLAN', 'CLOCK IN', 'BUILD', 'NOTES', 'FIX', 'BOSS', 'APPROVED', 'HOME'],
+    skin: () => ['#ffe45c', '#ffd90f', '#e8b800'], muzzle: '#d9a066', props: () => '', panel: (c) => c.bg,
+  },
+  sitcom: {
+    label: 'Sitcom café', inspired: 'Inspired by Friends (original characters)',
+    title: 'MISSION<i style="background:#e8423f"></i>CONTROL<i style="background:#f2b632"></i>AND<i style="background:#3d8bd6"></i>FRIENDS',
+    issue: (n) => `THE ONE WHERE THREE AGENTS BUILD A SOLAR SYSTEM · ${n} SCENES`,
+    caption: zip(['The One Where It All Begins', 'The One Where The Boss Says Stop', 'The One Where It Gets Approved', 'The One With The Order', 'The One Where They Finish', 'The One With The Critic', 'The One With The New Version', 'The One Where Someone Shows Up', 'The One Where It Breaks']),
+    fx: zip(['(APPLAUSE)', '(GASP)', '(CHEERING)', '(LAUGHTER)', '(APPLAUSE)', '(OOOOH)', '(LAUGHTER)', '(ENTRANCE APPLAUSE)', '(GROAN)']),
+    flow: ['PILOT', 'ENTRANCE', 'BUILD', 'NOTES', 'FIX', 'BOSS', 'APPROVED', 'FINALE'],
+    skin: (c) => [c.tone, c.tone, c.tone], muzzle: null,
+    props: () => '<g><rect x="112" y="160" width="26" height="26" rx="4" fill="#fbf3e4" stroke="#2a1c12" stroke-width="3"/><path d="M138 166 q10 0 10 8 q0 8 -10 8" fill="none" stroke="#2a1c12" stroke-width="3"/><path d="M118 156 q3 -6 0 -10 M128 156 q3 -6 0 -10" stroke="#fff" stroke-width="2" fill="none"/></g>',
+    panel: (c) => ({ A: '#e9a23b', B: '#c8442f', C: '#7a9a5b', lead: '#8a6fb5', root: '#f2b632', human: '#b9a58c' }[c.key]),
+  },
+  lab: {
+    label: 'Secret lab', inspired: "Inspired by Dexter's Laboratory (original characters)",
+    title: 'THE SECRET LABORATORY<br>OF MISSION CONTROL', issue: (n) => `EXPERIMENT #1 · THE SUN'S COMPANY · ${n} LOG ENTRIES`,
+    caption: zip(['LAB LOG, ENTRY ONE…', 'EMERGENCY SHUTDOWN!', 'EXPERIMENT SUCCESSFUL!', 'COMMAND ACCEPTED', 'EXPERIMENT COMPLETE', 'PEER REVIEW!', 'PROTOTYPE READY…', 'SCIENTIST ON DUTY', 'MALFUNCTION!']),
+    fx: zip(['INITIATE!', 'SHUTDOWN!', 'EUREKA!', 'AFFIRMATIVE!', 'COMPLETE!', 'ANALYZE!', 'BZZT!', 'BEEP!', 'KABOOM!']),
+    flow: ['HYPOTHESIS', 'SUIT UP', 'PROTOTYPE', 'REVIEW', 'DEBUG', 'COMMAND', 'EUREKA', 'COMPLETE'],
+    skin: () => ['#ffe2c4', '#ffd7b0', '#f0bf95'], muzzle: null,
+    props: (c) => `<path d="M30 200 Q32 150 82 144 Q132 150 134 200 Z" fill="#f5f7f8" stroke="#14202b" stroke-width="3"/><path d="M82 150 L70 200 M82 150 L94 200" stroke="#c9d3d8" stroke-width="3"/><path d="M68 146 L82 170 L96 146" fill="${c.shirt}" stroke="#14202b" stroke-width="3"/><rect x="49" y="64" width="34" height="26" rx="6" fill="#ffffff55" stroke="#14202b" stroke-width="4"/><rect x="81" y="64" width="34" height="26" rx="6" fill="#ffffff55" stroke="#14202b" stroke-width="4"/>`,
+    panel: (c) => ({ A: '#ffb3a7', B: '#a7d8ff', C: '#b6f2a7', lead: '#d6c2ff', root: '#7cf2c4', human: '#d8e0e4' }[c.key]),
+  },
+  snooker: {
+    label: "Snooker hall '75", inspired: "Inspired by Hagiga B'Snuker (1975, original characters)", rtl: true,
+    title: 'חגיגה<br>במערכת השמש', issue: (n) => `קומדיה במשימה אחת · ${n} סצנות`,
+    caption: zip(['הכל התחיל בתוכנית…', 'הבוס דיבר!', 'סוף סוף…', 'קיבלנו, בוס!', 'משימה הושלמה!', 'המבקר מכה שוב!', 'בינתיים, במועדון…', 'גיבור נכנס למועדון!', 'צרות על השולחן!']),
+    fx: zip(['יאללה!', 'עצור!', 'בול!', 'סבבה!', 'סנוקר!', 'נו באמת!', 'הופה!', 'אהלן!', 'אוי ואבוי!']),
+    flow: ['תוכנית', 'כניסה', 'בנייה', 'ביקורת', 'תיקון', 'פקודות', 'אישור', 'סוף'],
+    skin: (c) => [c.tone, c.tone, c.tone], muzzle: null,
+    props: () => '<path d="M58 112 Q70 102 82 108 Q94 102 106 112 Q94 118 82 113 Q70 118 58 112Z" fill="#2b1a0e"/><path d="M47 70 L47 104 M117 70 L117 104" stroke="#2b1a0e" stroke-width="7" stroke-linecap="round"/><path d="M4 198 L160 150" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/><path d="M156 151 L162 149" stroke="#f6e7c8" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="186" r="9" fill="#c0392b" stroke="#2b1a0e" stroke-width="2"/>',
+    panel: (c) => ({ A: '#c46a1c', B: '#0b6b3a', C: '#8b5a2b', lead: '#a0522d', root: '#f4c542', human: '#9c8b6e' }[c.key]),
+  },
+};
+Object.entries(CAST).forEach(([k, c]) => (c.key = k));
+
+const params = new URLSearchParams(location.search);
+let styleId = params.get('style') || (() => { try { return localStorage.getItem('comic-style'); } catch { return null; } })() || 'spidey';
+if (!STYLES[styleId]) styleId = 'spidey';
+
 function hero(c, talking, mood = 'happy') {
+  const S = STYLES[styleId];
+  const [s0, s1, s2] = S.skin(c);
+  const gid = `skin-${c.key}`;
   const hair = {
     spikes:  '<path d="M44 52 L46 18 L58 40 L66 8 L76 36 L88 6 L94 36 L108 14 L106 42 L118 30 L112 58 Z" fill="#2a1a0e" stroke="#111" stroke-width="3" stroke-linejoin="round"/>',
     beehive: '<path d="M44 58 Q36 0 82 -6 Q130 0 120 58 Q110 34 82 32 Q54 34 44 58Z" fill="#2f5bff" stroke="#111" stroke-width="3"/><path d="M60 30 Q82 10 104 30" stroke="#1b3bd0" stroke-width="3" fill="none"/>',
@@ -96,40 +198,49 @@ function hero(c, talking, mood = 'happy') {
   const brows = mood === 'angry'
     ? '<path d="M54 56 L76 64 M110 56 L88 64" stroke="#111" stroke-width="4"/>'
     : '<path d="M54 58 Q64 52 76 58 M88 58 Q98 52 110 58" stroke="#111" stroke-width="3" fill="none"/>';
+  const muzzle = S.muzzle ? `<path d="M52 108 Q82 100 114 108 Q118 134 82 136 Q50 134 52 108Z" fill="${S.muzzle}" stroke="#111" stroke-width="3"/>` : '';
+  // Cartoon styles use big round eyes; the people-styles use smaller, rounder faces.
+  const bigEyes = !!S.muzzle;
+  const eyes = bigEyes
+    ? `<circle cx="66" cy="76" r="15" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="98" cy="76" r="15" fill="#fff" stroke="#111" stroke-width="3"/>
+       <circle cx="69" cy="78" r="4" fill="#111"/><circle cx="95" cy="78" r="4" fill="#111"/>
+       <circle cx="70.5" cy="76.5" r="1.3" fill="#fff"/><circle cx="96.5" cy="76.5" r="1.3" fill="#fff"/>
+       <path d="M51 70 Q66 62 81 70" fill="url(#${gid})" stroke="#111" stroke-width="2.5"/><path d="M83 70 Q98 62 113 70" fill="url(#${gid})" stroke="#111" stroke-width="2.5"/>`
+    : `<ellipse cx="66" cy="78" rx="7" ry="8" fill="#fff" stroke="#111" stroke-width="2.5"/><ellipse cx="98" cy="78" rx="7" ry="8" fill="#fff" stroke="#111" stroke-width="2.5"/>
+       <circle cx="67" cy="79" r="3.5" fill="#111"/><circle cx="97" cy="79" r="3.5" fill="#111"/>`;
+  const mouth = bigEyes
+    ? '<path d="M64 116 Q82 130 100 116 Q82 122 64 116Z" fill="#5b1414" stroke="#111" stroke-width="3"/>'
+    : '<path d="M68 112 Q82 124 96 112 Q82 117 68 112Z" fill="#7a2020" stroke="#111" stroke-width="2.5"/>';
   return `<svg viewBox="0 0 164 200" class="${talking ? 'talking' : ''}">
-    <defs><linearGradient id="skin" x1="0" x2="1"><stop offset="0" stop-color="#ffe45c"/><stop offset=".7" stop-color="#ffd90f"/><stop offset="1" stop-color="#e8b800"/></linearGradient></defs>
+    <defs><linearGradient id="${gid}" x1="0" x2="1"><stop offset="0" stop-color="${s0}"/><stop offset=".7" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient></defs>
     <path d="M30 200 Q32 150 82 144 Q132 150 134 200 Z" fill="${c.shirt}" stroke="#111" stroke-width="3"/>
     <path d="M68 146 L82 162 L96 146" fill="#fff" stroke="#111" stroke-width="3"/>
-    <rect x="68" y="124" width="28" height="24" fill="url(#skin)" stroke="#111" stroke-width="3"/>
-    <ellipse cx="44" cy="88" rx="8" ry="12" fill="url(#skin)" stroke="#111" stroke-width="3"/>
-    <path d="M46 132 Q40 60 50 42 Q82 28 114 42 Q122 70 118 132 Q82 142 46 132Z" fill="url(#skin)" stroke="#111" stroke-width="3"/>
+    <rect x="68" y="124" width="28" height="24" fill="url(#${gid})" stroke="#111" stroke-width="3"/>
+    <ellipse cx="44" cy="88" rx="8" ry="12" fill="url(#${gid})" stroke="#111" stroke-width="3"/>
+    <ellipse cx="120" cy="88" rx="8" ry="12" fill="url(#${gid})" stroke="#111" stroke-width="3"/>
+    <path d="M46 132 Q40 60 50 42 Q82 28 114 42 Q122 70 118 132 Q82 142 46 132Z" fill="url(#${gid})" stroke="#111" stroke-width="3"/>
     ${hair}
     ${brows}
-    <circle cx="66" cy="76" r="15" fill="#fff" stroke="#111" stroke-width="3"/>
-    <circle cx="98" cy="76" r="15" fill="#fff" stroke="#111" stroke-width="3"/>
-    <circle cx="69" cy="78" r="4" fill="#111"/><circle cx="95" cy="78" r="4" fill="#111"/>
-    <circle cx="70.5" cy="76.5" r="1.3" fill="#fff"/><circle cx="96.5" cy="76.5" r="1.3" fill="#fff"/>
-    <path d="M51 70 Q66 62 81 70" fill="url(#skin)" stroke="#111" stroke-width="2.5"/>
-    <path d="M83 70 Q98 62 113 70" fill="url(#skin)" stroke="#111" stroke-width="2.5"/>
-    <path d="M80 86 Q74 100 86 102" fill="url(#skin)" stroke="#111" stroke-width="3"/>
-    <path d="M52 108 Q82 100 114 108 Q118 134 82 136 Q50 134 52 108Z" fill="#d9a066" stroke="#111" stroke-width="3"/>
-    <g class="mouth"><path d="M64 116 Q82 130 100 116 Q82 122 64 116Z" fill="#5b1414" stroke="#111" stroke-width="3"/></g>
+    ${eyes}
+    <path d="M80 86 Q74 100 86 102" fill="url(#${gid})" stroke="#111" stroke-width="3"/>
+    ${muzzle}
+    <g class="mouth">${mouth}</g>
+    ${S.props(c)}
   </svg>`;
 }
 
-// One message -> a short story beat: { kind, line, fx, caption }
 const BEATS = [
-  { re: /^KICKOFF/i,                 kind: 'kickoff', caption: 'IT ALL BEGAN WITH A PLAN…',    fx: 'BEGIN!' },
-  { re: /\bstop\b/i,                 kind: 'stop',    caption: 'THE BOSS HAS SPOKEN!',          fx: 'HALT!' },
-  { re: /approved/i,                 kind: 'approve', caption: 'AT LAST…',                      fx: 'APPROVED!' },
-  { re: /ack root/i,                 kind: 'ack',     caption: 'ORDERS RECEIVED!',              fx: 'YES BOSS!' },
-  { re: /\b(done|finished)\b/i,      kind: 'done',    caption: 'MISSION COMPLETE!',             fx: 'DONE!' },
-  { re: /C\s*->|round \d|critique/i, kind: 'review',  caption: 'THE CRITIC STRIKES!',           fx: 'CRITIQUE!' },
-  { re: /\bv\d+\b.*\bup\b|reload/i,  kind: 'ship',    caption: 'MEANWHILE, IN THE LAB…',        fx: 'ZING!' },
-  { re: /starting|on (sun|outer)|here,|joins/i, kind: 'start', caption: 'A HERO SUITS UP!',     fx: 'WHOOSH!' },
-  { re: /fix|bug|error|crash|broke/i, kind: 'fix',    caption: 'TROUBLE IN THE LAB!',           fx: 'KRAK!' },
+  { re: /^KICKOFF/i,                 kind: 'kickoff' },
+  { re: /\bstop\b/i,                 kind: 'stop' },
+  { re: /approved/i,                 kind: 'approve' },
+  { re: /ack root|^ack\b/i,          kind: 'ack' },
+  { re: /\b(done|finished)\b/i,      kind: 'done' },
+  { re: /C\s*->|round \d|critique/i, kind: 'review' },
+  { re: /\bv\d+\b.*\bup\b|reload/i,  kind: 'ship' },
+  { re: /starting|on (sun|outer)|here,|joins/i, kind: 'start' },
+  { re: /fix|bug|error|crash|broke/i, kind: 'fix' },
 ];
-const FLOW = [['kickoff', 'PLAN'], ['start', 'SUIT UP'], ['ship', 'BUILD'], ['review', 'CRITIQUE'], ['fix', 'FIX'], ['ack', 'BOSS ORDERS'], ['approve', 'APPROVED'], ['done', 'DONE']];
+const FLOW_KINDS = ['kickoff', 'start', 'ship', 'review', 'fix', 'ack', 'approve', 'done'];
 
 // Boil a wordy message down to a punchy headline: first clause, max ~8 words.
 function punch(text) {
@@ -148,25 +259,31 @@ function parse(line) {
 
 const esc = (s) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
-let lastLen = -1;
-async function render() {
-  let lines;
-  try { lines = await (await fetch('chat.json', { cache: 'no-store' })).json(); } catch { return; }
-  if (lines.length === lastLen) return;
-  lastLen = lines.length;
+let lines = [];
+function draw() {
+  const S = STYLES[styleId];
+  document.body.dataset.style = styleId;
+  document.documentElement.dir = 'ltr';
+  document.getElementById('title').innerHTML = S.title;
+  document.getElementById('title').dir = S.rtl ? 'rtl' : 'ltr';
+  document.getElementById('styles').innerHTML = Object.entries(STYLES).map(([id, s]) =>
+    `<button data-id="${id}" class="${id === styleId ? 'on' : ''}" title="${esc(s.inspired)}">${esc(s.label)}</button>`).join('');
+  document.getElementById('cast').innerHTML = Object.values(CAST).map((c) => `<div>${hero(c, false)}<br>${c.name}</div>`).join('');
+
   const beats = lines.map(parse).filter((m) => m.text.trim() && !/^TEAM CHAT/.test(m.text)).map((m) => {
-    const b = BEATS.find((x) => x.re.test(m.text)) || { kind: 'talk', caption: '', fx: '' };
-    return { ...m, ...b, line: punch(m.text), boss: m.who === 'root' };
+    const kind = (BEATS.find((x) => x.re.test(m.text)) || { kind: 'talk' }).kind;
+    return { ...m, kind, caption: S.caption[kind] || '', fx: S.fx[kind] || '', line: punch(m.text), boss: m.who === 'root' };
   });
   const seen = new Set(beats.map((b) => b.kind));
-  document.getElementById('flow').innerHTML = FLOW.map(([k, label]) => `<span class="${seen.has(k) ? 'on' : ''}">${label}</span>`).join('');
-  document.getElementById('issue').textContent = `ISSUE #1 · THE SUN'S COMPANY · ${beats.length} PANELS`;
+  document.getElementById('flow').innerHTML = FLOW_KINDS.map((k, i) => `<span class="${seen.has(k) ? 'on' : ''}">${S.flow[i]}</span>`).join('');
+  document.getElementById('flow').dir = S.rtl ? 'rtl' : 'ltr';
+  document.getElementById('issue').textContent = S.issue(beats.length);
   document.getElementById('page').innerHTML = beats.slice().reverse().map((b, i) => {
     const c = CAST[b.who];
     const big = b.boss || ['kickoff', 'approve', 'stop'].includes(b.kind);
     const size = big ? 'full' : (['review', 'ship'].includes(b.kind) ? 'wide' : '');
     return `<article class="panel ${size}">
-      <div class="bg" style="background:${c.bg} radial-gradient(#0003 1.8px, transparent 2px) 0 0 / 9px 9px"></div>
+      <div class="bg" style="background:${S.panel(c)} var(--dots)"></div>
       ${b.fx ? '<div class="rays"></div>' : ''}
       ${b.caption ? `<div class="caption">${b.caption}</div>` : ''}
       <span class="time">${esc(b.time)}</span>
@@ -177,12 +294,26 @@ async function render() {
       </div>
     </article>`;
   }).join('');
-  document.getElementById('foot').textContent = `NEWEST PANEL FIRST · HOVER A BUBBLE FOR THE FULL MESSAGE · UPDATED ${new Date().toLocaleTimeString()}`;
+  document.getElementById('foot').textContent = `${S.inspired.toUpperCase()} · NEWEST PANEL FIRST · HOVER A BUBBLE FOR THE FULL MESSAGE`;
 }
 
-document.getElementById('cast').innerHTML = Object.values(CAST).map((c) => `<div>${hero(c, false)}<br>${c.name}</div>`).join('');
-render();
-setInterval(render, 5000);
+document.getElementById('styles').addEventListener('click', (e) => {
+  const id = e.target.closest('button')?.dataset.id;
+  if (!id) return;
+  styleId = id;
+  try { localStorage.setItem('comic-style', id); } catch {}
+  draw();
+});
+
+async function poll() {
+  try {
+    const next = await (await fetch('chat.json', { cache: 'no-store' })).json();
+    if (next.length !== lines.length) { lines = next; draw(); }
+  } catch {}
+}
+draw();
+poll();
+setInterval(poll, 5000);
 </script>
 </body>
 </html>

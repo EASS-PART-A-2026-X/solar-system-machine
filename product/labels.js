@@ -147,6 +147,65 @@ addEventListener('pointerup', (e) => {
 addEventListener('pointercancel', () => setFocus(null));
 let zonesAt = 0;
 
+// Placement. Every frame each label picks a slot around its planet: a leader leaving the disc
+// at one of 16 angles, a short horizontal tail, then the label. Hard rules (a slot is never used
+// if it breaks one): stay on stage, off the copy and switcher, off every disc, off every other
+// label. Soft costs pick the nicest legal slot: short leaders, a label that reads as its own
+// planet's, no crossing leaders, and stickiness so labels don't hop between frames.
+const DIRS = Array.from({ length: 16 }, (_, k) => (k * Math.PI) / 8);
+const LENS_WIDE = [6, 10, 15, 20, 26];
+const LENS_NARROW = [5, 9, 14, 19, 25];
+const MAX_GAP = 36;   // px from disc edge to label box (validator allows 40; the art director prefers a dropped label to a long one)
+const DISC_PAD = 4;   // px of air between a label and any disc
+const LABEL_PAD = 4;  // px of air between two labels
+const EDGE = 15;      // px inside the stage: clears the 12px Nat Geo frame
+
+const rectCircle = (b, c, pad) => {
+  const dx = c.x - Math.max(b.x0, Math.min(c.x, b.x1));
+  const dy = c.y - Math.max(b.y0, Math.min(c.y, b.y1));
+  return Math.hypot(dx, dy) < c.r + pad;
+};
+const segCircle = (p, q, c) => {
+  const vx = q[0] - p[0], vy = q[1] - p[1];
+  const L2 = vx * vx + vy * vy || 1;
+  const u = Math.max(0, Math.min(1, ((c.x - p[0]) * vx + (c.y - p[1]) * vy) / L2));
+  return Math.hypot(p[0] + u * vx - c.x, p[1] + u * vy - c.y) < c.r;
+};
+// Saturn's rings as a tilted ellipse. Uses anchor.ring {rx, ry, angle} when the scene publishes
+// it; otherwise the hero camera's look (measured: 2.5r by 1.1r, tilted about -32 degrees).
+const onRing = (b, d) => {
+  const ring = d.ring || { rx: d.r * 2.5, ry: d.r * 1.1, angle: -0.56 };
+  const rx = ring.rx + DISC_PAD, ry = ring.ry + DISC_PAD;
+  const co = Math.cos(-ring.angle), si = Math.sin(-ring.angle);
+  const xs = [0, 0.25, 0.5, 0.75, 1].map((f) => b.x0 + (b.x1 - b.x0) * f), ys = [b.y0, (b.y0 + b.y1) / 2, b.y1];
+  for (const x of xs) for (const y of ys) {
+    const u = (x - d.x) * co - (y - d.y) * si, v = (x - d.x) * si + (y - d.y) * co;
+    if ((u * u) / (rx * rx) + (v * v) / (ry * ry) < 1) return true;
+  }
+  return false;
+};
+const grow = (b, d) => ({ x0: b.x0 - d, y0: b.y0 - d, x1: b.x1 + d, y1: b.y1 + d });
+
+function candidates(a, it, narrow) {
+  const r = Math.max(0, Number(a.r) || 0);
+  const out = [];
+  for (let k = 0; k < DIRS.length; k++) {
+    const th = DIRS[k], c = Math.cos(th), s = Math.sin(th);
+    const sides = Math.abs(c) < 0.25 ? [1, -1] : [Math.sign(c)];
+    for (const len of narrow ? LENS_NARROW : LENS_WIDE) {
+      const sx = a.x + c * (r + 1), sy = a.y + s * (r + 1);
+      const ex = sx + c * len, ey = sy + s * len;
+      for (const hd of sides) {
+        const hx = ex + hd * 8;
+        const lx = hd > 0 ? hx + 3 : hx - 3 - it.w;
+        out.push({ key: `${k}:${len}:${hd}`, k, len, sx, sy, ex, ey, hx,
+          box: { x0: lx, x1: lx + it.w, y0: ey - it.h / 2, y1: ey + it.h / 2 } });
+      }
+    }
+  }
+  return out;
+}
+
 function frame(t) {
   requestAnimationFrame(frame);
   const anchors = Array.isArray(window.__labelAnchors) ? window.__labelAnchors : null;
@@ -155,106 +214,72 @@ function frame(t) {
     return;
   }
   if (!zones || t - zonesAt > 500) { zones = keepOut(); zonesAt = t; }
+  const narrow = zones.w < 640;
+
+  const bodies = anchors.filter((a) => a && typeof a.name === 'string' && Number.isFinite(a.x) && Number.isFinite(a.y));
+  const discs = bodies.map((a) => ({ name: a.name, x: a.x, y: a.y, r: Math.max(0, Number(a.r) || 0), ring: a.ring }));
+  const ringed = (n) => n === 'Saturn';
+  const keepOuts = [zones.mast, zones.facts, zones.sw].filter(Boolean);
+
+  // Legal against the fixed scene (stage, copy, discs); labels are checked as they are placed.
+  const staticOk = (box) =>
+    box.x0 >= EDGE && box.y0 >= EDGE && box.x1 <= zones.w - EDGE && box.y1 <= zones.h - EDGE &&
+    !keepOuts.some((z) => hit(box, z)) &&
+    !discs.some((d) => rectCircle(box, d, DISC_PAD)) &&
+    !discs.some((d) => ringed(d.name) && onRing(box, d));
+
+  const plans = bodies.map((a) => {
+    const it = getItem(a.name);
+    measure(it);
+    const r = Math.max(0, Number(a.r) || 0);
+    const gapOk = (b) => Math.hypot(a.x - Math.max(b.x0, Math.min(a.x, b.x1)), a.y - Math.max(b.y0, Math.min(a.y, b.y1))) - r <= MAX_GAP;
+    const cands = candidates(a, it, narrow).filter((c) => gapOk(c.box) && staticOk(c.box));
+    return { a, it, cands };
+  });
+  // Most constrained first, so crowded bodies get a slot before roomy ones take it.
+  plans.sort((p, q) => p.cands.length - q.cands.length || p.a.x - q.a.x);
 
   const seen = new Set();
-  const placed = [];
-  const leaders = [];
-  const placedRows = [];
-  // Phone: short leaders only; a label that can't sit unambiguously is dropped (captions carry it).
-  const narrow = zones.w < 640; // [[p,q], ...] segments already drawn
-  const sorted = anchors
-    .filter((a) => a && typeof a.name === 'string' && Number.isFinite(a.x) && Number.isFinite(a.y))
-    .slice()
-    .sort((a, b) => a.x - b.x);
-
-  // Every planet disc (Saturn incl. rings) is an obstacle labels must not cover.
-  const ringed = (n) => n === 'Saturn';
-  const discs = sorted.map((a) => {
-    const r = Math.max(0, Number(a.r) || 0);
-    const g = 1;
-    const rx = r * g * (ringed(a.name) ? 2.3 : 1) + 6, ry = r * g + 6;
-    return { x0: a.x - rx, x1: a.x + rx, y0: a.y - ry, y1: a.y + ry };
-  });
-
-  sorted.forEach((a, i) => {
-    const it = getItem(a.name);
+  const placed = [];   // label boxes already used
+  const leaders = [];  // leader segments already drawn
+  for (const { a, it, cands } of plans) {
     seen.add(a.name);
-    measure(it);
-    const isSun = a.name === SUN.name;
-    const r = Math.max(0, Number(a.r) || 0) * (isSun ? 1.2 : 1); // Sun's glow reads larger than its disc
-
-    // Outward side by orbit number: odd orbits above, even below. Sun: top-left.
-    const orbit = PLANETS.findIndex((p) => p.name === a.name) + 1;
-    const prefer = isSun ? -1 : orbit % 2 === 1 ? -1 : 1;
-    const order = isSun
-      ? [[-1, -1], [-1, 1], [1, -1], [1, 1]]
-      : [[prefer, 1], [prefer, -1], [-prefer, 1], [-prefer, -1], [prefer, 0], [-prefer, 0]];
-    // Score every candidate; hard conflicts cost a lot, so the least-bad wins.
-    let best = null, prevCand = null;
-    order.forEach(([side, hd], oi) => {
-      for (const len of (narrow || isSun ? [14, 22, 30, 36] : [16, 24, 32, 40, 54, 68])) {
-        const sx = a.x + hd * r * (ringed(a.name) ? 2.2 : 0.7071);
-        const sy = hd === 0 ? a.y + side * (r * (ringed(a.name) ? 0.8 : 1) + 2)
-                            : a.y + side * r * (ringed(a.name) ? 0.1 : 0.7071);
-        const ex = sx + hd * len * 0.7, ey = sy + side * len;
-        const hx = ex + (hd || 1) * 10;
-        const lx = hd >= 0 ? hx + 4 : hx - 4 - it.w;
-        const box = { x0: lx, x1: lx + it.w, y0: ey - it.h / 2, y1: ey + it.h / 2 };
-        const lead = { x0: Math.min(sx, hx), x1: Math.max(sx, hx), y0: Math.min(sy, ey), y1: Math.max(sy, ey) };
-        const key = `${side}${hd}${len}`;
-        let cost = oi * 6 + len * 0.25 + (len > 40 ? 30 : 0) + (it.prev === key ? -4 : 0);
-        if (hit(box, zones.mast) || hit(box, zones.facts) || hit(box, zones.sw)) cost += 400;
-        if (box.x1 > zones.w - 8 || box.x0 < 8 || box.y0 < 4 || box.y1 > zones.h - 4) cost += 400;
-        cost += 300 * placed.filter((p) => hit(box, p)).length;
-        cost += 200 * discs.filter((d) => hit(box, d)).length;
-        cost += 40 * discs.filter((d, j) => j !== i && hit(lead, d)).length;
-        const segs = [[[sx, sy], [ex, ey]], [[ex, ey], [hx, ey]]];
-        for (const [p, q] of segs) {
-          for (const [u, v] of leaders) if (segX(p, q, u, v)) cost += narrow ? 400 : 300;
-          for (const pb of placed) if (segBox(p, q, pb)) cost += 150;
-        }
-        for (const [u, v] of leaders) if (segBox(u, v, box)) cost += 150;
-        // Attribution: the label must sit nearer its own planet than any other.
-        const cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
-        const edge = (q) => Math.hypot(q.x - cx, q.y - cy) - (Number(q.r) || 0) * (ringed(q.name) ? 1.6 : 1);
-        const own = edge(a);
-        const attr = sorted.some((q) => q !== a && q.name !== SUN.name && edge(q) < own);
-        if (attr) cost += 400;
-        // Reading order: within a row (above / below), label x-order follows planet x-order.
-        for (const pr of placedRows) if (pr.side === side && pr.x0 > box.x0) cost += 120;
-        const cand = { cost, attr, key, side, sx, sy, ex, ey, hx, box };
-        if (key === it.prev) prevCand = cand;
-        if (!best || cost < best.cost) best = cand;
+    const own = discs.find((d) => d.name === a.name);
+    const others = discs.filter((d) => d.name !== a.name);
+    let best = null, prev = null;
+    for (const c of cands) {
+      if (placed.some((p) => hit(c.box, grow(p, LABEL_PAD)))) continue;
+      const segs = [[[c.sx, c.sy], [c.ex, c.ey]], [[c.ex, c.ey], [c.hx, c.ey]]];
+      if (segs.some(([p, q]) => placed.some((b) => segBox(p, q, b)))) continue; // never draw through a label
+      let cost = c.len * 0.5;
+      // Gentle preference for the upper-right quadrant, the magazine default.
+      cost += 6 * (1 - Math.cos(DIRS[c.k] + Math.PI / 4));
+      // Reads as its own planet's label: nearest disc edge to the label centre is its own.
+      const cx = (c.box.x0 + c.box.x1) / 2, cy = (c.box.y0 + c.box.y1) / 2;
+      const edge = (d) => Math.hypot(d.x - cx, d.y - cy) - d.r * (ringed(d.name) ? 1.8 : 1);
+      const mine = edge(own);
+      if (others.some((d) => d.name !== SUN.name && edge(d) < mine)) cost += 90;
+      for (const [p, q] of segs) {
+        for (const [u, v] of leaders) if (segX(p, q, u, v)) cost += 70;
+        for (const d of others) if (segCircle(p, q, d)) cost += 45;
       }
-    });
-    // Hysteresis: keep the current slot unless it has been blocked for > 300ms.
-    if (prevCand && best !== prevCand) {
-      const blocked = prevCand.cost >= 100;
-      if (!blocked) { best = prevCand; it.blockedAt = 0; }
-      else if (!prevCand.attr) { // never hold a slot that reads as another planet's label
-        if (!it.blockedAt) it.blockedAt = t;
-        if (t - it.blockedAt < 600) best = prevCand; else it.blockedAt = 0;
-      }
-    } else it.blockedAt = 0;
-    it.prev = best.key;
-    // Off-stage or nowhere legal to put it: hide rather than drop a label in the copy.
-    const off = a.x < -r || a.y < -r || a.x > zones.w + r || a.y > zones.h + r;
-    if (off || best.cost >= 400) {
-      it.el.style.opacity = 0; it.line.style.opacity = 0; it.tick.setAttribute('r', '0'); it.off = null;
-      return;
+      // Avoid stacking labels in a tight column (reads as one block).
+      for (const p of placed) if (c.box.x0 < p.x1 && c.box.x1 > p.x0 && Math.abs((c.box.y0 + c.box.y1) - (p.y0 + p.y1)) / 2 < it.h * 2.2) cost += 30;
+      const cand = { ...c, cost };
+      if (c.key === it.prev) prev = cand;
+      if (!best || cost < best.cost) best = cand;
     }
-    placedRows.push({ side: best.side, x0: best.box.x0 });
-    // Glide: ease the leader/label offsets (relative to the planet) toward the target.
-    const tgt = [best.sx - a.x, best.sy - a.y, best.ex - a.x, best.ey - a.y, best.hx - a.x, best.box.x0 - a.x, best.box.y0 - a.y];
-    if (!it.off) it.off = tgt.slice();
-    else for (let k = 0; k < 7; k++) it.off[k] += (tgt[k] - it.off[k]) * 0.35;
-    const o = it.off;
-    best = { ...best, sx: a.x + o[0], sy: a.y + o[1], ex: a.x + o[2], ey: a.y + o[3], hx: a.x + o[4],
-      box: { ...best.box, x0: a.x + o[5], y0: a.y + o[6] } };
+    // Stickiness: keep last frame's slot while it is still legal and not much worse.
+    if (prev && best && prev !== best && prev.cost <= best.cost + 25) best = prev;
+    const off = a.x < -own.r || a.y < -own.r || a.x > zones.w + own.r || a.y > zones.h + own.r;
+    if (!best || off) {
+      it.prev = null;
+      it.el.style.opacity = 0; it.line.style.opacity = 0; it.tick.setAttribute('r', '0');
+      continue;
+    }
+    it.prev = best.key;
+    placed.push(best.box);
     leaders.push([[best.sx, best.sy], [best.ex, best.ey]], [[best.ex, best.ey], [best.hx, best.ey]]);
-    const b = best.box;
-    placed.push({ x0: b.x0 - 8, x1: b.x1 + 8, y0: b.y0 - 4, y1: b.y1 + 4 });
-
     it.line.setAttribute('points', `${best.sx.toFixed(1)},${best.sy.toFixed(1)} ${best.ex.toFixed(1)},${best.ey.toFixed(1)} ${best.hx.toFixed(1)},${best.ey.toFixed(1)}`);
     it.tick.setAttribute('cx', best.sx.toFixed(1));
     it.tick.setAttribute('cy', best.sy.toFixed(1));
@@ -262,7 +287,7 @@ function frame(t) {
     it.el.style.opacity = 1;
     it.line.style.opacity = 1;
     it.el.style.transform = `translate(${best.box.x0.toFixed(1)}px, ${best.box.y0.toFixed(1)}px)`;
-  });
+  }
 
   items.forEach((it, name) => {
     if (!seen.has(name)) { it.el.style.opacity = 0; it.line.setAttribute('points', ''); it.tick.setAttribute('r', '0'); }

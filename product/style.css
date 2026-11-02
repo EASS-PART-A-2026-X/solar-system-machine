@@ -346,3 +346,6 @@ body.has-focus #labels polyline:not(.on) { opacity: .3 !important; }
   .headline { font-size: 2.2rem; }
   .plabel b { font-size: 10.5px; letter-spacing: .12em; }
 }
+/* Balanced dek: no one-word last line ("Neptune." widow at 1440). */
+.dek { text-wrap: pretty; }
+@media (min-width: 1200px) { .dek { max-width: 31rem; } }
